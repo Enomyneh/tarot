@@ -5,6 +5,7 @@
  *
  * @property Auth auth
  * @property Carta_Casa_Setor_Valor_model carta_casa_setor_valor
+ * @property CI_Input input
  *
  */
 class Admin extends CI_Controller {
@@ -32,8 +33,11 @@ class Admin extends CI_Controller {
 
         $cartasCasasSetoresValores = $this->carta_casa_setor_valor->get();
 
+        $precoAlterado = $this->input->get('precoAlterado');
+
         $this->load->view('admin_precos_cartas', array(
-            'cartasCasasSetoresValores' => $cartasCasasSetoresValores
+            'cartasCasasSetoresValores' => $cartasCasasSetoresValores,
+            'precoAlterado' => $precoAlterado
         ));
     }
 
@@ -42,7 +46,7 @@ class Admin extends CI_Controller {
         $this->load->model("carta_casa_setor_valor_model", "carta_casa_setor_valor");
 
         $cartaCasaSetorValor = array_shift($this->carta_casa_setor_valor->get(array(
-           'codCartaCasaSetorValor' => $codCartaCasaSetorValor
+           'codCasaCartaSetorValor' => $codCartaCasaSetorValor
         )));
 
         $this->load->view('admin_preco_carta_editar', array(
@@ -50,6 +54,30 @@ class Admin extends CI_Controller {
         ));
     }
 
-}
+    public function precoCartaDoEditar()
+    {
+        $codCartaCasaSetorValor = $this->input->post('cod_carta_casa_setor_valor');
+        $valor = Utils::convertCurrencyToFloat($this->input->post('valor'));
 
-?>
+        if($valor == 0)
+        {
+            die("ERRO VALOR NAO PODE SER ZERO");
+        }
+
+        $this->load->model("carta_casa_setor_valor_model", "carta_casa_setor_valor");
+
+        /** @var Carta_Casa_Setor_Valor_model $cartaCasaSetorValor */
+        $cartaCasaSetorValor = array_shift($this->carta_casa_setor_valor->get(array(
+            'codCasaCartaSetorValor' => $codCartaCasaSetorValor
+        )));
+
+        $this->carta_casa_setor_valor->save(
+            $cartaCasaSetorValor->carta,
+            $cartaCasaSetorValor->casa,
+            $cartaCasaSetorValor->setor,
+            $valor
+        );
+
+        redirect('admin/precosCartas?precoAlterado=1');
+    }
+}

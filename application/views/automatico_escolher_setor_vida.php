@@ -140,98 +140,13 @@
     </div>
 </form>
 
-        <? if(count($jogosConsultaVirtual) > 0): ?>
-        <br/>
-        <br/>
-        <div>
-            <h2 class="versalete">Consultas Realizadas</h2>
-        </div> 
-        <div class="big-widget">
-            <div class="widget">
-                <div class="widget-bottom">
-                    <div class="widget-content">
-                        <div class="textwidget">
-                            <? foreach($jogosConsultaVirtual as $jogo): ?>
-                                <div class="mapas">
-                                    <div class="clearfix gray-bg">
-                                        <? if($jogo->titulo == "" || is_null($jogo->titulo)): ?>
-                                            <span class="titulo definir-titulo">Clique aqui para definir um título</span>
-                                        <? else: ?>
-                                            <span class="titulo"><?=$jogo->titulo?></span>
-                                        <? endif; ?>
-                                        <input cod="<?=$jogo->cod_url_jogo?>" type="text" value="<?=@$jogo->titulo?>" class="hidden" />
-                                        <span class="loading hidden">Salvando...</span>
-                                    </div>
-                                    <div class="clearfix">
-                                        <span class="left">
-                                            <b class="versalete">Setor da Vida:</b> <?= $jogo->nome_setor_vida ?>
-                                        </span>
-                                        <span class="right">
-                                            <a href="<?=site_url()?>/mapa/verJogoCompleto?token=<?=$jogo->token?>">Ver Análise Completa por apenas R$ <?=moeda($jogo->custoCombinacoesNaoCompradas)?></a>
-                                        </span>
-                                    </div>
-                                    <div class="clearfix">
-                                        <span class="left">
-                                            <b class="versalete">Data do Jogo:</b> <?= mysql_to_br($jogo->data_cadastro) ?>
-                                        </span>
-                                        <span class="right">
-                                            <a href="<?=site_url()?>/jogo/resultado/token/<?=$jogo->token?>">Ver a Amostra Gratuita</a>
-                                        </span>
-                                    </div>
-                                    <div class="bottom-border"></div>
-                                </div>
-                            <? endforeach; ?>
-                        </div>
-                    </div> <!-- end .widget-content-->
-                </div> <!-- end .widget-bottom-->
-            </div>
-        </div>
-    <? endif; ?>
-    <? if(count($jogosAutoConsulta) > 0): ?>
-        <div>
-            <h2>Auto Consulta</h2>
-        </div> 
-        <div class="big-widget">
-            <div class="widget">
-                <div class="widget-bottom">
-                    <div class="widget-content">
-                        <div class="textwidget">
-                            <? foreach($jogosAutoConsulta as $jogo): ?>
-                                <div class="mapas">
-                                    <div class="clearfix gray-bg">
-                                        <? if($jogo->titulo == "" || is_null($jogo->titulo)): ?>
-                                            <span class="titulo definir-titulo">Clique aqui para definir um título</span>
-                                        <? else: ?>
-                                            <span class="titulo"><?=$jogo->titulo?></span>
-                                        <? endif; ?>
-                                        <input cod="<?=$jogo->cod_url_jogo?>" type="text" value="<?=@$jogo->titulo?>" class="hidden" />
-                                        <span class="loading hidden">Salvando...</span>
-                                    </div>
-                                    <div class="clearfix">
-                                        <span class="left">
-                                            <b class="versalete">Setor da Vida:</b> <?= $jogo->nome_setor_vida ?>
-                                        </span>
-                                        <span class="right">
-                                            <a href="<?=site_url()?>/mapa/verJogoCompleto?token=<?=$jogo->token?>">Ver Análise Completa por apenas R$ <?=moeda($jogo->custoCombinacoesNaoCompradas)?></a>
-                                        </span>
-                                    </div>
-                                    <div class="clearfix">
-                                        <span class="left">
-                                            <b class="versalete">Data do Jogo:</b> <?= mysql_to_br($jogo->data_cadastro) ?>
-                                        </span>
-                                        <span class="right">
-                                            <a href="<?=site_url()?>/jogo/resultado/token/<?=$jogo->token?>">Ver a Amostra Gratuita</a>
-                                        </span>
-                                    </div>
-                                    <div class="bottom-border"></div>
-                                </div>
-                            <? endforeach; ?>
-                        </div>
-                    </div> <!-- end .widget-content-->
-                </div> <!-- end .widget-bottom-->
-            </div>
-        </div>
-    <? endif; ?>
+<?
+    $this->load->view('div_consultas_realizadas', array(
+        'jogosConsultaVirtual' => $jogosConsultaVirtual,
+        'jogosAutoConsulta' => $jogosAutoConsulta
+    ))
+?>
+
 <div id="dialog-cartas"></div>
 <form id="frm-resultado" method="POST" action="<?=site_url("/tarot/verResultado")?>">
     <input type="hidden" name="casas-preenchidas"/>

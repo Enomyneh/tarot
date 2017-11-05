@@ -8,7 +8,9 @@
 <body>
 
 <div class="container">
-    <div class="mensagem">Combina&ccedil;&atilde;o salva como dispon&iacute;vel!</div>
+    <? if($precoAlterado == 1): ?>
+        <div class="mensagem">Preço alterado com sucesso!</div>
+    <? endif; ?>
 
     <table width="99%" class="table" cellpadding="3" cellspacing="0">
         <thead>

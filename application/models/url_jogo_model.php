@@ -1,6 +1,11 @@
 <?php
 
 class Url_jogo_model extends CI_Model {
+
+    public $codUrlJogo;
+    public $setorVida;
+    public $cartasString;
+    public $token;
     
     public function __construct(){
         

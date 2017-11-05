@@ -740,6 +740,29 @@ class Combinacao_model extends CI_Model {
 
         return false;
     }
-}
 
-?>
+    public function inserirUsuarioCartaCasaSetor($codUsuario, $codCarta, $codCasa, $codSetor)
+    {
+        $result = $this->db->select('cod_usuario')
+            ->from('usuario_carta_casa_setor')
+            ->where('cod_usuario', $codUsuario)
+            ->where('cod_carta', $codCarta)
+            ->where('cod_casa_carta', $codCasa)
+            ->where('cod_setor_vida', $codSetor)
+            ->get();
+
+        if($result->num_rows() > 0)
+        {
+            return true;
+        }
+
+        $this->db->insert('usuario_carta_casa_setor', array(
+            'cod_usuario' => $codUsuario,
+            'cod_carta' => $codCarta,
+            'cod_casa_carta' => $codCasa,
+            'cod_setor_vida' => $codSetor
+        ));
+
+        return true;
+    }
+}

@@ -24,10 +24,11 @@
         <p>
             <b>Valor: </b>
             <span>
-            <input type="text" name="valor" class="moeda" value="R$ <?= moeda($cartaCasaSetorValor->valor) ?>" />
-        </span>
+                <input type="text" name="valor" class="moeda" value="R$ <?= moeda($cartaCasaSetorValor->valor) ?>" />
+            </span>
         </p>
         <input type="submit" class="button" value="SALVAR"/>
+        <input type="hidden" name="cod_carta_casa_setor_valor" value="<?= $cartaCasaSetorValor->cod ?>" />
     </form>
     <br/><br/><br/>
     <a href="<?= site_url() ?>/admin/precosCartas">VOLTAR</a>

@@ -21,6 +21,16 @@ class Auth {
         }
     }
 
+    public function isLoggedIn()
+    {
+        return $this->check(NO_REDIRECT);
+    }
+
+    public function getUserId()
+    {
+        return Auth::getData('cod');
+    }
+
     public function checkUsuarioLite($redirect = true){
         // obtem a sessao
         @session_start();

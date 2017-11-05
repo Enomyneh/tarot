@@ -1,7 +1,7 @@
 <div>
     <h2 class="versalete">Setor da vida: <?=$setorVida->nome_setor_vida?></h2>
 </div>
-<? foreach($casasPreenchidas as $key => $casa): ?>
+<? foreach($casasPreenchidas->combinacoes as $key => $casa): ?>
     <? $class = ($key == 0) ? "" : "hidden" ?>
     <div class="<?=$class?>" id="div-casa-<?=$casa["casaCarta"]->cod_casa_carta?>">
         <div class="clearfix tMargin20">
@@ -36,9 +36,9 @@
 
                                     <!-- <div class="tMargin20"><h2>Resultado</h2></div> -->
                                     <div><?=@$casa["resultado"]->texto_combinacao?><?=($casa["comprado"]==false)?"":""?></div>
-                                    <? if($casa["comprado"] == false): ?>
+                                    <? if($casa["comprado"] == false AND $mostraJogoGratuito == false): ?>
                                         <div class="tMargin10">
-                                            Continue lendo a sua interpretação por apenas R$ <?= number_format($custoCombinacao, 2, ",", ".") ?> por página. Acima você tem uma noção da quantidade de conteúdo observando a área criptografada.
+                                            Continue lendo a sua interpretação, clique em "Obter Leitura Completa". Acima você tem uma noção da quantidade de conteúdo observando a área criptografada.
                                         </div>
                                         <div style="clear: both; margin-top: 20px;" class="clearfix">
                                             <? if($logado): ?>
@@ -70,7 +70,7 @@
 <script>
 $(document).ready(function(){
     var DIV_CASA = [
-        <? foreach($casasPreenchidas as $casa): ?>
+        <? foreach($casasPreenchidas->combinacoes as $casa): ?>
             <?=$casa["casaCarta"]->cod_casa_carta?>,
         <? endforeach; ?>
     ];

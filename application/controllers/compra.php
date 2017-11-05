@@ -5,12 +5,15 @@
  * Class Compra
  *
  * @property Carta_Casa_Setor_Valor_model carta_casa_setor_valor
+ * @property Combinacao_model combinacao
+ * @property Auth auth
+ * @property Jogo_model jogo
  */
 
 class Compra extends CI_Controller {
     
-    public function confirmar(){
-        
+    public function confirmar()
+    {
         // obtem os parametros
         $arcanoMaiorCod = $this->input->get("ama");
         $arcanoMenor1Cod = $this->input->get("ame1");
@@ -322,12 +325,10 @@ class Compra extends CI_Controller {
         ));
     }
 
-    public function confirmarJogoCompleto(){
+    public function confirmarJogoCompleto()
+    {
         // confirma o login
         $this->auth->check();
-
-        // carrega a session
-        $this->load->library("session");
 
         // carrega as models
         $this->load->model("carta_model", "carta");
@@ -336,21 +337,17 @@ class Compra extends CI_Controller {
         $this->load->model("conta_model", "conta");
         $this->load->model("setor_vida_model", "setor_vida");
         $this->load->model("carta_casa_setor_valor_model", "carta_casa_setor_valor");
+        $this->load->model("jogo_model", "jogo");
 
-        // obtem o jogo da session
-        $token = $this->session->userdata("token_jogo");
+        // busca o jogo completo a patir da session
+        $jogoCompleto = $this->jogo->getByTokenInSession();
 
-        // valida o token
-        if(isMd5($token) == false){
-            die("erro: token invalido");
-        }
+        // busca as cartas que o usuario ja comprou para nao cobrar novamente
+        $cartasCasasSetoresUsuario = $this->carta_casa_setor_valor->get(array(
+            'cod_usuario' => $this->auth->getData('cod')
+        ));
 
-        // busca as cartas do jogo atual
-        $urlJogo = $this->url_jogo->get(array("token" => $token));
-
-        // busca o jogo completo a patir da string das cartas
-        $jogoCompleto = getJogoByCartasString($urlJogo->cartas);
-
+        // TODO: RETIRAR COBRANCAS INDEVIDAS
 
         // desativado
 //        // busca as combinacoes do usuario
@@ -376,22 +373,15 @@ class Compra extends CI_Controller {
 //            }
 //        }
 
-        // busca o custo padrao de cada carta-casa-setor
-        $custo = $this->carta_casa_setor_valor->getCustoPadrao();
-
+        // DESATIVADA COBRANCA POR SALDO
         // obtem o saldo do usuario
         // $saldo = $this->conta->getSaldo(array("cod_usuario" => $this->auth->getData("cod")));
-
-        $setorVida = $this->setor_vida->get(array('cod_setor_vida' => $urlJogo->cod_setor_vida));
 
         // chama a view
         $this->template->view("compra_confirmar_jogo_completo", array(
             "title" => "Confirmar compra",
             "jogoCompleto" => $jogoCompleto,
-            "custo" => $custo,
-            //"saldo" => $saldo,
-            "verticalTabs" => true,
-            "setorVida" => $setorVida
+            "verticalTabs" => true
         ));
     }
 
@@ -504,38 +494,65 @@ class Compra extends CI_Controller {
         ));
     }
 
-    public function redirecionarResultado(){
-        // carrega a session
-        $this->load->library("session");
+    public function obterJogoGratis()
+    {
+        // checa a sessao
+        $this->auth->check();
 
         // carrega as models
-        $this->load->model("carta_model", "carta");
-        $this->load->model("url_jogo_model", "url_jogo");
+        $this->load->model("carta_model","carta");
         $this->load->model("combinacao_model", "combinacao");
+        $this->load->model("conta_model", "conta");
+        $this->load->model("url_jogo_model", "url_jogo");
         $this->load->model("setor_vida_model", "setor_vida");
+        $this->load->model("jogo_model", "jogo");
 
-        // obtem o jogo da session
-        $token = $this->session->userdata("token_jogo");
+        $jogoCompleto = $this->jogo->getByTokenInSession();
 
-        // valida o token
-        if(isMd5($token) == false){
-            die("erro: token invalido");
+        // checa o valor do jogo, se for gratis, apenas mostra o resultado
+        if($jogoCompleto->custo == 0)
+        {
+            $this->redirecionarResultado($jogoCompleto);
+            die;
         }
 
-        // busca as cartas do jogo atual
-        $urlJogo = $this->url_jogo->get(array("token" => $token));
+        die("pag seguro pendente");
 
-        // busca o jogo completo a patir da string das cartas
-        $jogoCompleto = getJogoByCartasString($urlJogo->cartas);
+        // chama a funcao que inclui as combinacoes de carta, casa, setor para o usuario
+        $this->inserirJogoParaUsuario($jogoCompleto, $setorVida);
 
-        // busca o setor da vida
-        $setorVida = $this->setor_vida->get(array("cod_setor_vida" => $urlJogo->cod_setor_vida));
+        die("ok");
+    }
 
+    public function redirecionarResultado(Jogo_model $jogo)
+    {
         // monta a url amigavel
-        $url = montarUrlAmigavel($setorVida, $jogoCompleto);
+        $url = Utils::montarUrlAmigavel($jogo);
 
-        redirect("jogo/resultado/".$url->url);
+        redirect("jogo/resultado/".$url->url . '?came_from_compras=1');
+    }
+
+    private function inserirJogoParaUsuario($jogoCompleto,  $setorVida)
+    {
+        $this->load->model("combinacao_model", "combinacao");
+
+        $codUsuario = $this->auth->getData("cod");
+
+        foreach($jogoCompleto as $key => $jogo)
+        {
+            // insere o arcano maior
+            $this->combinacao->inserirUsuarioCartaCasaSetor($codUsuario, $jogo['arcanoMaior']->cod_carta,
+                $jogo['casaCarta']->cod_casa_carta, $setorVida->cod_setor_vida);
+
+            // insere o arcano menor 1
+            $this->combinacao->inserirUsuarioCartaCasaSetor($codUsuario, $jogo['arcanoMenor1']->cod_carta,
+                $jogo['casaCarta']->cod_casa_carta, $setorVida->cod_setor_vida);
+
+            // insere o arcano maior
+            $this->combinacao->inserirUsuarioCartaCasaSetor($codUsuario, $jogo['arcanoMenor2']->cod_carta,
+                $jogo['casaCarta']->cod_casa_carta, $setorVida->cod_setor_vida);
+        }
+
+        return true;
     }
 }
-
-?>

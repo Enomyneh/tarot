@@ -79,6 +79,29 @@ class Carta_Casa_Setor_Valor_model extends CI_Model {
             $this->db->where('c.cod_carta_casa_setor_valor', $options['codCasaCartaSetorValor']);
         }
 
+        if(isset($options['cod_casa_carta']))
+        {
+            $this->db->where('c.cod_casa_carta', $options['cod_casa_carta']);
+        }
+
+        if(isset($options['cod_carta']))
+        {
+            $this->db->where('c.cod_carta', $options['cod_carta']);
+        }
+
+        if(isset($options['cod_setor_vida']))
+        {
+            $this->db->where('c.cod_setor_vida', $options['cod_setor_vida']);
+        }
+
+        if(isset($options['cod_usuario']))
+        {
+            $this->db->join('usuario_carta_casa_setor u', 'u.cod_carta = c.cod_carta 
+                                                                   AND u.cod_casa_carta = c.cod_casa_carta
+                                                                   AND u.cod_setor_vida = c.cod_setor_vida')
+                ->where('u.cod_usuario', $options['cod_usuario']);
+        }
+
         $result = $this->db->select("c.cod_carta_casa_setor_valor")
             ->select("c.cod_carta")
             ->select("c.cod_casa_carta")
@@ -117,5 +140,3 @@ class Carta_Casa_Setor_Valor_model extends CI_Model {
         return $data;
     }
 }
-
-?>

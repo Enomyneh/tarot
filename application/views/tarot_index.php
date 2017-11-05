@@ -80,7 +80,10 @@
         <a href="<?=site_url()?>/monografia/view">Monografias</a>
         <br/><br/>
         <a href="<?=site_url()?>/conta/verUsuarios">Usu&aacute;rios</a>
+        <br/><br/>
         <a href="<?=site_url()?>/admin/precosCartas">Ver precos das cartas</a>
+        <br/><br/>
+        <a href="<?=site_url()?>/jogo/escolherSetorVida?p=1">Voltar ao site</a>
     </div>
 </div>
 

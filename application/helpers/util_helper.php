@@ -30,52 +30,6 @@ function getSaldo(){
     return $ci->login->getSaldo(array("cod_usuario" => $cod));
 }
 
-function getJogoByCartasString($cartasStr){
-    // obtem a instancia
-    $ci = &get_instance();
-    
-    // carrega as models
-    $ci->load->model("carta_model", "carta");
-    $ci->load->model("casa_carta_model", "casa_carta");
-
-    // transforma em um array das casas
-    $casasCarta = explode("|", $cartasStr);
-
-    // desativa a ultima
-    unset($casasCarta[count($casasCarta)-1]);
-
-    // busca todas as cartas
-    $cartas = $ci->carta->get();
-
-    // monta array com o jogo completo
-    $jogoCompleto = array();
-
-    // percorre o jogo para montar as cartas  e buscar as combinacoes
-    foreach ($casasCarta as $key => $casa) {
-        // salva os dados da casa da carta
-        $jogoCompleto[$key]["casaCarta"] = $ci->casa_carta->get(array("cod_casa_carta" => ($key+1)));
-
-        // separa as cartas
-        list($arcMaior,$arcMenor1,$arcMenor2) = explode("#", $casa);
-
-        foreach($cartas as $carta){
-            // procura o arcano maior
-            if($carta->cod_carta == $arcMaior){
-                $jogoCompleto[$key]["arcanoMaior"] = $carta;
-            }
-            if($carta->cod_carta == $arcMenor1){
-                $jogoCompleto[$key]["arcanoMenor1"] = $carta;
-            }
-            if($carta->cod_carta == $arcMenor2){
-                $jogoCompleto[$key]["arcanoMenor2"] = $carta;
-            }
-        }
-    }
-
-    // retorna o jogo completo
-    return $jogoCompleto;
-}
-
 function montarUrlAmigavel($setorVida, $jogoCompleto){
 
     // muda o nome do setor da vida amoroso
@@ -134,4 +88,42 @@ function str_rot($s, $n = 13) {
     if ($n == 13) return str_rot13($s);
     $rep = substr($letters, $n * 2) . substr($letters, 0, $n * 2);
     return strtr($s, $letters, $rep);
+}
+
+function getJogoByCartasString($cartasStr){
+    // obtem a instancia
+    $ci = &get_instance();
+
+    // carrega as models
+    $ci->load->model("carta_model", "carta");
+    $ci->load->model("casa_carta_model", "casa_carta");
+    // transforma em um array das casas
+    $casasCarta = explode("|", $cartasStr);
+    // desativa a ultima
+    unset($casasCarta[count($casasCarta)-1]);
+    // busca todas as cartas
+    $cartas = $ci->carta->get();
+    // monta array com o jogo completo
+    $jogoCompleto = array();
+    // percorre o jogo para montar as cartas  e buscar as combinacoes
+    foreach ($casasCarta as $key => $casa) {
+        // salva os dados da casa da carta
+        $jogoCompleto[$key]["casaCarta"] = $ci->casa_carta->get(array("cod_casa_carta" => ($key+1)));
+        // separa as cartas
+        list($arcMaior,$arcMenor1,$arcMenor2) = explode("#", $casa);
+        foreach($cartas as $carta){
+            // procura o arcano maior
+            if($carta->cod_carta == $arcMaior){
+                $jogoCompleto[$key]["arcanoMaior"] = $carta;
+            }
+            if($carta->cod_carta == $arcMenor1){
+                $jogoCompleto[$key]["arcanoMenor1"] = $carta;
+            }
+            if($carta->cod_carta == $arcMenor2){
+                $jogoCompleto[$key]["arcanoMenor2"] = $carta;
+            }
+        }
+    }
+    // retorna o jogo completo
+    return $jogoCompleto;
 }

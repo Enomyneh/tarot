@@ -1,125 +1,57 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
+/**
+ * Class Jogo
+ * @property Jogo_model jogo
+ * @property Combinacao_model combinacao
+ * @property Auth auth
+ * @property Template template
+ * @property Url_jogo_model url_jogo
+ * @property Carta_Casa_Setor_Valor_model carta_casa_setor_valor
+ */
 class Jogo extends CI_Controller {
 
     private $texto = "";
     
-    public function escolherSetorVida(){
-        // carrega as models
-        $this->load->model("setor_vida_model", "setor_vida");
-        $this->load->model("url_jogo_model", "url_jogo");
-        $this->load->model("combinacao_model", "combinacao");
-
+    public function escolherSetorVida()
+    {
         // obtem a flag profissional
         $profissional = $this->input->get("p");
 
-        $codUsuarioCombinacao = $this->input->get("cuc");
-        
-        // busca os setores da vida
-        $setoresVida = $this->setor_vida->get();
-
-        // busca os jogos do usuario        
-        $jogos = $this->url_jogo->get(array(
-            "cod_usuario" => $this->auth->getData("cod"),
-            "limit"       => 20
-        ));
-
-        if(is_object($jogos)){
-            $jogos = array($jogos);
+        if($profissional != 1)
+        {
+            redirect('jogo/consultaVirtual');
         }
 
-        // busca todas combinacoes do usuario (ja compradas)
-        $combinacoesCompradas = $this->combinacao->getUsuarioCombinacao(array("cod_usuario" => $this->auth->getData("cod")));
-
-        // busca o custo de cada combinacao
-        $custoCombinacao = $this->combinacao->getCusto();
-
-        // percorre os jogos
-        foreach ($jogos as $key => $jogo) {
-            
-            // obtem o jogo completo
-            $jogos[$key]->jogoCompleto = getJogoByCartasString($jogo->cartas);
-
-            $combinacoesNaoCompradas = 0;
-
-            // percorre o jogo completo para checar as combinacoes compradas
-            foreach ($jogos[$key]->jogoCompleto as $jogoCompleto) {
-
-                $combinacaoCompradaFlag = false;
-
-                // percorre as combinacoes compradas
-                foreach($combinacoesCompradas as $combinacaoComprada){
-                    
-                    // checa se eh a mesma combinacao
-                    if(
-                        $jogoCompleto["arcanoMaior"]->cod_carta == $combinacaoComprada->cod_arcano_maior &&
-                        $jogoCompleto["arcanoMenor1"]->cod_carta == $combinacaoComprada->cod_arcano_menor_1 &&
-                        $jogoCompleto["arcanoMenor2"]->cod_carta == $combinacaoComprada->cod_arcano_menor_2 
-                    ){
-                        // combinacao comprada 
-                        $combinacaoCompradaFlag = true;
-                        break;
-                    }
-                }
-
-                // checa se encontrou a combinacao comprada
-                if($combinacaoCompradaFlag == false){
-                    $combinacoesNaoCompradas++;
-                }
-            }
-
-            // salva o numero de combinacoes nao compradas
-            $jogos[$key]->combinacoesNaoCompradas = $combinacoesNaoCompradas;
-
-            // salva o custo das combinacoes nao compradas
-            $jogos[$key]->custoCombinacoesNaoCompradas = $custoCombinacao * $combinacoesNaoCompradas;
-        }
-
-        // carrega o helper necessario
-        $this->load->helper("date_helper");
-        
-        // separa os tipos de jogo
-        $jogosConsultaVirtual = array();
-        $jogosAutoConsulta = array();
-
-        foreach($jogos as $jogo){
-            if($jogo->tipo_jogo == "CONSULTA_VIRTUAL"){
-
-                $jogosConsultaVirtual[] = $jogo;
-            }else{
-
-                $jogosAutoConsulta[] = $jogo;
-            }
-        }
+        $dados = $this->getDadosTelaInicial();
         
         // carrega o template
         $this->template->view("automatico_escolher_setor_vida", array(
             "title" => "Auto Consulta",
             "verticalTabs"          => true,
-            "jogosConsultaVirtual"  => $jogosConsultaVirtual,
-            "jogosAutoConsulta"     => $jogosAutoConsulta,
-            "setoresVida"           => $setoresVida,
+            "jogosConsultaVirtual"  => $dados['jogosConsultaVirtual'],
+            "jogosAutoConsulta"     => $dados['jogosAutoConsulta'],
+            "setoresVida"           => $dados['setoresVida'],
             "profissional"          => $profissional,
-            "codUsuarioCombinacao"  => $codUsuarioCombinacao,
+            "codUsuarioCombinacao"  => $dados['codUsuarioCombinacao'],
             "menuLateral"           => false
         ));
     }
 
-    public function consultaVirtual(){
+    private function getDadosTelaInicial()
+    {
         // carrega as models
         $this->load->model("setor_vida_model", "setor_vida");
         $this->load->model("url_jogo_model", "url_jogo");
         $this->load->model("combinacao_model", "combinacao");
-
-        // obtem a flag profissional
-        $profissional = 0;
+        $this->load->model("jogo_model", "jogo");
 
         $codUsuarioCombinacao = $this->input->get("cuc");
-        
+
         // busca os setores da vida
         $setoresVida = $this->setor_vida->get();
 
-        // busca os jogos do usuario        
+        // busca os jogos do usuario
         $jogos = $this->url_jogo->get(array(
             "cod_usuario" => $this->auth->getData("cod"),
             "limit"       => 20
@@ -129,56 +61,19 @@ class Jogo extends CI_Controller {
             $jogos = array($jogos);
         }
 
-        // busca todas combinacoes do usuario (ja compradas)
-        $combinacoesCompradas = $this->combinacao->getUsuarioCombinacao(array("cod_usuario" => $this->auth->getData("cod")));
-
-        // busca o custo de cada combinacao
-        $custoCombinacao = $this->combinacao->getCusto();
-
         // percorre os jogos
-        foreach ($jogos as $key => $jogo) {
-            
+        foreach ($jogos as $key => $jogo)
+        {
+            // instancia o jogo
+            $jogoCompleto = new Jogo_model();
+
             // obtem o jogo completo
-            $jogos[$key]->jogoCompleto = getJogoByCartasString($jogo->cartas);
-
-            $combinacoesNaoCompradas = 0;
-
-            // percorre o jogo completo para checar as combinacoes compradas
-            foreach ($jogos[$key]->jogoCompleto as $jogoCompleto) {
-
-                $combinacaoCompradaFlag = false;
-
-                // percorre as combinacoes compradas
-                foreach($combinacoesCompradas as $combinacaoComprada){
-                    
-                    // checa se eh a mesma combinacao
-                    if(
-                        $jogoCompleto["arcanoMaior"]->cod_carta == $combinacaoComprada->cod_arcano_maior &&
-                        $jogoCompleto["arcanoMenor1"]->cod_carta == $combinacaoComprada->cod_arcano_menor_1 &&
-                        $jogoCompleto["arcanoMenor2"]->cod_carta == $combinacaoComprada->cod_arcano_menor_2 
-                    ){
-                        // combinacao comprada 
-                        $combinacaoCompradaFlag = true;
-                        break;
-                    }
-                }
-
-                // checa se encontrou a combinacao comprada
-                if($combinacaoCompradaFlag == false){
-                    $combinacoesNaoCompradas++;
-                }
-            }
-
-            // salva o numero de combinacoes nao compradas
-            $jogos[$key]->combinacoesNaoCompradas = $combinacoesNaoCompradas;
-
-            // salva o custo das combinacoes nao compradas
-            $jogos[$key]->custoCombinacoesNaoCompradas = $custoCombinacao * $combinacoesNaoCompradas;
+            $jogos[$key]->jogoCompleto = $jogoCompleto->getByToken($jogo->token);
         }
 
         // carrega o helper necessario
         $this->load->helper("date_helper");
-        
+
         // separa os tipos de jogo
         $jogosConsultaVirtual = array();
         $jogosAutoConsulta = array();
@@ -192,16 +87,31 @@ class Jogo extends CI_Controller {
                 $jogosAutoConsulta[] = $jogo;
             }
         }
-        
-        // carrega o template
-        $this->template->view("jogo_consulta_virtual", array(
-            "title" => "Consulta Virtual",
-            "verticalTabs"          => true,
+
+        return array(
             "jogosConsultaVirtual"  => $jogosConsultaVirtual,
             "jogosAutoConsulta"     => $jogosAutoConsulta,
             "setoresVida"           => $setoresVida,
-            "profissional"          => $profissional,
             "codUsuarioCombinacao"  => $codUsuarioCombinacao,
+        );
+    }
+
+    public function consultaVirtual()
+    {
+        // obtem a flag profissional
+        $profissional = 0;
+
+        $dados = $this->getDadosTelaInicial();
+
+        // carrega o template
+        $this->template->view("jogo_consulta_virtual", array(
+            "title" => "Auto Consulta",
+            "verticalTabs"          => true,
+            "jogosConsultaVirtual"  => $dados['jogosConsultaVirtual'],
+            "jogosAutoConsulta"     => $dados['jogosAutoConsulta'],
+            "setoresVida"           => $dados['setoresVida'],
+            "profissional"          => $profissional,
+            "codUsuarioCombinacao"  => $dados['codUsuarioCombinacao'],
             "menuLateral"           => false
         ));
     }
@@ -383,8 +293,8 @@ class Jogo extends CI_Controller {
         ));
     }
         
-    public function resultado(){
-
+    public function resultado()
+    {
         // obtem os parametros
         $params = func_get_args();
 
@@ -397,6 +307,9 @@ class Jogo extends CI_Controller {
             }
         }
 
+        // checa se o jogo veio redirecionado da pagina de compra
+        $veioDeCompras = $this->input->get('came_from_compras');
+
         // valida o token
         if(isMd5($token) == false){
             die("erro: token nao encontrado");
@@ -408,91 +321,67 @@ class Jogo extends CI_Controller {
         $this->load->model("carta_model", "carta");
         $this->load->model("casa_carta_model", "casa_carta");
         $this->load->model("setor_vida_model", "setor_vida");
-
-        // busca o jogo
-        $jogo = $this->url_jogo->get(array("token" => $token));
-
-        $codUrlJogo = $jogo->cod_url_jogo;
-
-        // armazena o setor da vida
-        $setorVidaCod = $jogo->cod_setor_vida;
-
-        // busca o setor da vida
-        $setorVida = $this->setor_vida->get(array('cod_setor_vida' => $setorVidaCod));
-
-        // obtem as cartas do jogo
-        $cartasStr = $jogo->cartas;
+        $this->load->model("jogo_model", "jogo");
+        $this->load->model('carta_casa_setor_valor_model', 'carta_casa_setor_valor');
 
         // obtem o jogo completo
-        $jogoCompleto = getJogoByCartasString($cartasStr);
+        $jogoCompleto = $this->jogo->getByToken($token);
+
+        // obtem o setor da vida
+        $setorVida = $jogoCompleto->setorVida;
         
         // percorre o jogo e busca o resultado das combinacoes e as descricoes das casas
-        foreach ($jogoCompleto as $key => $jogo) {
+        foreach ($jogoCompleto->combinacoes as $key => $jogo)
+        {
             // marca todas combinacoes como compradas
-            $jogoCompleto[$key]["comprado"] = true;
+            $jogoCompleto->combinacoes[$key]["comprado"] = true;
 
             // busca a combinacao
-            $jogoCompleto[$key]["resultado"] = $this->combinacao->get(array(
+            $jogoCompleto->combinacoes[$key]["resultado"] = $this->combinacao->get(array(
                 "cod_arcano_maior"      => $jogo["arcanoMaior"]->cod_carta,
                 "cod_arcano_menor_1"    => $jogo["arcanoMenor1"]->cod_carta,
                 "cod_arcano_menor_2"    => $jogo["arcanoMenor2"]->cod_carta,
-                "cod_setor_vida"        => $setorVidaCod,
+                "cod_setor_vida"        => $setorVida->cod_setor_vida,
                 "cod_casa_carta"        => $jogo["casaCarta"]->cod_casa_carta
             ));
         }
 
         // checa se esta deslogado
-        if($this->auth->check(false) == false){
-
+        if($this->auth->check(false) == false)
+        {
             // nao logado corta o texto e marca para comprar
-            foreach ($jogoCompleto as $key => $jogo) {
-
+            foreach ($jogoCompleto->combinacoes as $key => $jogo)
+            {
                 // se existe resultado
-                if(isset($jogoCompleto[$key]["resultado"]->texto_combinacao)){
+                if(isset($jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao)){
 
                     // obtem somente o texto cortado
-                    $jogoCompleto[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
+                    $jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
                 }
 
-                $jogoCompleto[$key]["comprado"] = false;
+                $jogoCompleto->combinacoes[$key]["comprado"] = false;
             }
+
         }else{
 
-            // busca as combinacoes do usuario
-            $combinacoes = $this->combinacao->getUsuarioCombinacao(array(
-                "cod_usuario" => $this->auth->getData("cod")
-            ));
-
             // percorre o resultado para acertar as casas que o usuario nao possui e ainda deve comprar
-            foreach ($jogoCompleto as $key => $jogo) {
-
-                // declara a variavel
-                $possuiCombinacao = false;
-
-                // percorre as combinacoes para ver se possui
-                foreach ($combinacoes as $combinacao) {
-                    if( $jogo["arcanoMaior"]->cod_carta == $combinacao->cod_arcano_maior &&
-                        $jogo["arcanoMenor1"]->cod_carta == $combinacao->cod_arcano_menor_1 &&
-                        $jogo["arcanoMenor2"]->cod_carta == $combinacao->cod_arcano_menor_2){
-
-                        // seta combinacao como comprada
-                        $possuiCombinacao = true;
-
-                        break;
-                    }
-                }
-
+            foreach ($jogoCompleto->combinacoes as $key => $jogo)
+            {
                 // se nao possui combinacao corta o texto
-                if($possuiCombinacao == false){
-
+                if($jogo['casaCarta']->ja_comprada == false)
+                {
                     // se existe resultado
-                    if(isset($jogoCompleto[$key]["resultado"]->texto_combinacao)){
-
-                        // obtem somente o texto cortado
-                        $jogoCompleto[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
+                    if(isset($jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao))
+                    {
+                        // se o jogo eh gratis e ja passou pela tela de compra nao corta o texto
+                        if($jogoCompleto->custo > 0 OR $veioDeCompras != 1)
+                        {
+                            // obtem somente o texto cortado
+                            $jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
+                        }
                     }
 
-                    $jogoCompleto[$key]["comprado"] = false;
+                    $jogoCompleto->combinacoes[$key]["comprado"] = false;
                 }
             }
         }
@@ -502,22 +391,27 @@ class Jogo extends CI_Controller {
 
             $this->url_jogo->saveUsuarioUrlJogo(array(
                 "cod_usuario"   => $this->auth->getData("cod"),
-                "cod_url_jogo"  => $codUrlJogo
+                "cod_url_jogo"  => $jogoCompleto->url->cod_url_jogo
             ));
-
         }
 
-        // busca o custo de cada combinacao
-        $custoCombinacao = $this->combinacao->getCusto();
+        // define se deve mostrar jogo gratuito ou nao
+        $mostraJogoGratuito = false;
+
+        if($veioDeCompras == 1 AND $jogoCompleto->custo == 0)
+        {
+            $mostraJogoGratuito = true;
+        }
 
         // chama a view
         $this->template->view("automatico_ver_resultado", array(
             "title"             => "Resultado do Jogo",
             "casasPreenchidas"  => $jogoCompleto,
-            "setorVida"         => $setorVida,
+            "setorVida"         => $jogoCompleto->setorVida,
             "logado"            => $this->auth->check(NO_REDIRECT),
-            "custoCombinacao"   => $custoCombinacao,
-            "verticalTabs"      => true
+            "veioDeCompras"     => $veioDeCompras,
+            "verticalTabs"      => true,
+            "mostraJogoGratuito" => $mostraJogoGratuito
         ));
     }
 
