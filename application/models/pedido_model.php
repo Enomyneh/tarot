@@ -1,6 +1,18 @@
 <?php
 
+/**
+ * Class Pedido_model
+ *
+ * @property CI_DB_active_record db
+ */
 class Pedido_model extends CI_Model {
+
+    public $cod;
+    public $codFormatadoPedidoReferencia;
+    public $status;
+    public $data;
+    public $tokenJogo;
+    public $pagseguroTransactionCode;
     
     public function __construct(){
         
@@ -20,7 +32,7 @@ class Pedido_model extends CI_Model {
         return $this->db->insert_id();
     }
 
-    public function get($options = array()){
+    public function getOld($options = array()){
 
         if(isset($options["cod_usuario"])){
             $this->db->where("u.cod", $options["cod_usuario"]);
@@ -67,6 +79,77 @@ class Pedido_model extends CI_Model {
 
         return true;
     }
-}
 
-?>
+    /**
+     * @param Jogo_model $jogo
+     * Cada jogo tem um token e só pode gerar um pedido
+     */
+    public function create(Jogo_model $jogo)
+    {
+        $codPedido = null;
+
+        // checa se o pedido ja existe
+        $result = $this->db->select('cod_pedido_novo')
+                ->from('pedido_novo')
+                ->where('token_jogo', $jogo->url->token)
+                ->get();
+
+        if($result->num_rows() > 0)
+        {
+            $row = $result->row();
+
+            $codPedido = $row->cod_pedido_novo;
+
+        }else{
+
+            $data = date('Y-m-d H:i:s');
+
+            $this->db->insert('pedido_novo', array(
+                'data' => $data,
+                'status' => STATUS_AGUARDANDO_PAGAMENTO,
+                'token_jogo' => $jogo->url->token
+            ));
+
+            $codPedido = $this->db->insert_id();
+        }
+
+        $pedido = array_shift($this->get(array('cod_pedido' => $codPedido)));
+
+        return $pedido;
+    }
+
+    public function get(array $options)
+    {
+        if(isset($options['cod_pedido']))
+        {
+            $this->db->where('cod_pedido_novo', $options['cod_pedido']);
+        }
+
+        $this->db->select('cod_pedido_novo')
+            ->select('status')
+            ->select('data')
+            ->select('token_jogo')
+            ->select('pagseguro_transaction_code')
+            ->from('pedido_novo');
+
+        $result = $this->db->get();
+
+        $pedidos = array();
+
+        foreach($result->result() as $row)
+        {
+            $pedido = new Pedido_model();
+
+            $pedido->cod = $row->cod_pedido_novo;
+            $pedido->status = $row->status;
+            $pedido->data = $row->data;
+            $pedido->pagseguroTransactionCode = $row->pagseguro_transaction_code;
+            $pedido->tokenJogo = $row->token_jogo;
+            $pedido->codFormatadoPedidoReferencia = PEDIDOS_PREFIXO_REFERENCIA . str_pad($pedido->cod, PEDIDOS_PADDING_LENGTH, '0', STR_PAD_LEFT);
+
+            $pedidos[] = $pedido;
+        }
+
+        return $pedidos;
+    }
+}

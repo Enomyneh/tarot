@@ -63,9 +63,7 @@ class QueryNotificationService
             );
             $http->get(
                 self::request($connection, QueryNotificationParser::getData($queryNotification),
-                    QueryNotificationParser::getNotificationCode($queryNotification)),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                    QueryNotificationParser::getNotificationCode($queryNotification))
             );
             $response = Responsibility::http(
                 $http,

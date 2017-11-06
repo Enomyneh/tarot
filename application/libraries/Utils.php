@@ -1,5 +1,7 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed'); 
- 
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+
+require_once "pagseguro-php-sdk-master/vendor/autoload.php";
+
 class Utils {
 
     public static function convertCurrencyToFloat($currency)
@@ -117,5 +119,110 @@ class Utils {
         $result->url = $urlAmigavel;
 
         return $result;
+    }
+
+    public static function createPagSeguroTransactionCode(Jogo_model $jogo, Pedido_model $pedido)
+    {
+        $ci = get_instance();
+
+        $usuario = Auth::getFullData();
+
+        // valida o custo
+        if($jogo->custo == 0)
+        {
+            die('ERRO: JOGO SEM CUSTO PARA COBRANCA');
+        }
+
+        // define o email e a senha
+        $email = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_EMAIL_PRODUCAO : PAGSEGURO_EMAIL_SANDBOX;
+        $token = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_TOKEN_PRODUCAO : PAGSEGURO_TOKEN_SANDBOX;
+
+        \PagSeguro\Library::initialize();
+        \PagSeguro\Library::cmsVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
+        \PagSeguro\Library::moduleVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
+
+        //For example, to configure the library dynamically:
+        \PagSeguro\Configuration\Configure::setEnvironment(ENVIROMENT_PAGSEGURO);//production or sandbox
+        \PagSeguro\Configuration\Configure::setAccountCredentials(
+            $email,
+            $token
+        );
+        \PagSeguro\Configuration\Configure::setCharset('UTF-8');// UTF-8 or ISO-8859-1
+        \PagSeguro\Configuration\Configure::setLog(true, getcwd() . '/application/cache/logPagseguro.log');
+
+        $payment = new \PagSeguro\Domains\Requests\Payment();
+
+        $payment->addItems()->withParameters(
+            '0001', // ITEM ID
+            'Jogo de Tarot - Taromancia', // ITEM DESCRIPTION
+            1, // ITEM QUANTITY
+            $jogo->custo // ITEM AMOUNT
+        );
+
+        //Add items by parameter
+//        $payment->addParameter()->withParameters('itemId', '0003')->index(3);
+//        $payment->addParameter()->withParameters('itemDescription', 'Notebook Rosa')->index(3);
+//        $payment->addParameter()->withParameters('itemQuantity', '1')->index(3);
+//        $payment->addParameter()->withParameters('itemAmount', '201.40')->index(3);
+
+        $payment->setCurrency("BRL");
+        $payment->setReference($pedido->codFormatadoPedidoReferencia);
+
+//        $payment->setRedirectUrl("http://www.lojamodelo.com.br");
+
+        // Set your customer information.
+        $payment->setSender()->setName($usuario['nome']);
+        $payment->setSender()->setEmail($usuario['email']);
+        $payment->setSender()->setPhone()->withParameters(
+            $usuario['ddd'],
+            $usuario['telefone']
+        );
+//        $payment->setSender()->setDocument()->withParameters(
+//            'CPF',
+//            '31072545845'
+//        );
+
+//        $payment->setShipping()->setAddress()->withParameters(
+//            'Av. Brig. Faria Lima',
+//            '1384',
+//            'Jardim Paulistano',
+//            '01452002',
+//            'São Paulo',
+//            'SP',
+//            'BRA',
+//            'apto. 114'
+//        );
+//        $payment->setShipping()->setCost()->withParameters(20.00);
+//        $payment->setShipping()->setType()->withParameters(\PagSeguro\Enum\Shipping\Type::SEDEX);
+
+        $payment->setShipping()->setAddressRequired()->withParameters('FALSE');
+
+//Add items by parameter using an array
+//        $payment->addParameter()->withArray(['notificationURL', 'http://www.lojamodelo.com.br/nofitication']);
+
+
+//        $payment->setRedirectUrl("http://www.lojamodelo.com.br");
+//        $payment->setNotificationUrl("http://www.lojamodelo.com.br/nofitication");
+
+        try {
+            $onlyCheckoutCode = true;
+            $result = $payment->register(
+                \PagSeguro\Configuration\Configure::getAccountCredentials(),
+                $onlyCheckoutCode
+            );
+
+            $checkoutCode = $result->getCode();
+
+        } catch (Exception $e) {
+            return array(
+                'success' => false,
+                'error' => $e->getMessage()
+            );
+        }
+
+        return array(
+            'success' => true,
+            'code' => $checkoutCode
+        );
     }
 }

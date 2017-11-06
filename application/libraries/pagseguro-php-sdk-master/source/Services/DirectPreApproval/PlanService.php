@@ -61,9 +61,7 @@ class PlanService
             );
             $http->post(
                 self::request($connection),
-                PlanParser::getData($data),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                PlanParser::getData($data)
             );
             $response = Responsibility::http(
                 $http,

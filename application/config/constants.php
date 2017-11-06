@@ -41,5 +41,23 @@ define('QTDE_CARACTERES_FREE', 1200);
 define('NO_REDIRECT' , false);
 define('REDIRECT' , true);
 
+define('STATUS_AGUARDANDO_PAGAMENTO', 'AGUARDANDO_PAGAMENTO');
+define('STATUS_PAGO', 'PAGO');
+
+define('NOME_SISTEMA', 'Taromancia');
+define('VERSAO_SISTEMA', 'v1.0.0');
+
+define('PEDIDOS_PREFIXO_REFERENCIA', 'PED');
+define('PEDIDOS_PADDING_LENGTH', 6);
+
+define('PAGSEGURO_EMAIL_PRODUCAO', 'financeiro@taromancia.com.br');
+define('PAGSEGURO_TOKEN_PRODUCAO', 'A7496A83A92448169E9923D64A34B52E');
+
+define('PAGSEGURO_EMAIL_SANDBOX', 'tiagozn@gmail.com');
+define('PAGSEGURO_TOKEN_SANDBOX', 'DA411D213040408C8F632F29931571BF');
+
+// define('ENVIROMENT_PAGSEGURO', 'production');
+define('ENVIROMENT_PAGSEGURO', 'sandbox');
+
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */

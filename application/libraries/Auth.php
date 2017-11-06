@@ -93,5 +93,15 @@ class Auth {
             return false;
         }
     }
+
+    public static function getFullData()
+    {
+        // obtem a sessao
+        @session_start();
+
+        $usuario = unserialize(@$_SESSION["usuario"]);
+
+        return $usuario;
+    }
 } 
 ?>

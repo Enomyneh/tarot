@@ -68,7 +68,6 @@ class Data
     use Base\DirectPreApproval\ChangePayment;
     use Base\DirectPreApproval\QueryPaymentOrder;
     use Base\DirectPreApproval\QueryNotification;
-    use Base\DirectPreApproval\RetryPaymentOrder;
 
     /**
      * Data constructor.

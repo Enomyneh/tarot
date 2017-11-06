@@ -1,5 +1,10 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
+/**
+ * Class Pedido
+ * @property Jogo_model jogo
+ * @property Pedido_model pedido
+ */
 class Pedido extends CI_Controller {
     
     public function mapeamento(){
@@ -201,6 +206,23 @@ class Pedido extends CI_Controller {
         $this->pedido->desativar($codPedido);
 
         redirect(site_url() . "/pedido/verTodos");
+    }
+
+    public function gerarPagSeguro()
+    {
+        $this->load->model("jogo_model", "jogo");
+        $this->load->model("pedido_model", 'pedido');
+
+        $jogo = new Jogo_model();
+        $jogo->getByTokenInSession();
+
+        // cria o pedido
+        $pedido = $this->pedido->create($jogo);
+
+        // gera o codigo do PagSeguro
+        $retorno = Utils::createPagSeguroTransactionCode($jogo, $pedido);
+
+        die(json_encode($retorno));
     }
 }
 

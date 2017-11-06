@@ -61,9 +61,7 @@ class Date
                 ['service' => 'Transactions.Search.Date']
             );
             $http->get(
-                self::request($connection, $options),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection, $options)
             );
 
             $response = Responsibility::http(

@@ -36,9 +36,7 @@ class Installment
             $connection = new Connection\Data($credentials);
             $http = new Http();
             Logger::info(sprintf("GET: %s", self::request($connection, $params)), ['service' => 'Installment']);
-            $http->get(self::request($connection, $params),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding());
+            $http->get(self::request($connection, $params));
 
             $response = Responsibility::http(
                 $http,

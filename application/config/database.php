@@ -45,7 +45,7 @@
 | the active record class
 */
 
-$active_group = 'default';
+$active_group = 'producao';
 $active_record = TRUE;
 
 $db['default']['hostname'] = '127.0.0.1';
@@ -64,7 +64,7 @@ $db['default']['swap_pre'] = '';
 $db['default']['autoinit'] = TRUE;
 $db['default']['stricton'] = FALSE;
 
-$db['producao']['hostname'] = 'robb0262.publiccloud.com.br';
+$db['producao']['hostname'] = 'robb0510.publiccloud.com.br';
 $db['producao']['username'] = 'tznr__tarot';
 $db['producao']['password'] = '80808080';
 $db['producao']['database'] = 'tznr_oracvlvm_tarot';

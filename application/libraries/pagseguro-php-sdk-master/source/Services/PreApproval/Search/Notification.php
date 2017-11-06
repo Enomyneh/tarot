@@ -55,9 +55,7 @@ class Notification
                 ['service' => 'PreApproval.Search.Notification']
             );
             $http->get(
-                self::request($connection, $code),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection, $code)
             );
 
             $response = Responsibility::http(

@@ -61,9 +61,7 @@ class QueryService
                 ['service' => 'DirectPreApproval']
             );
             $http->get(
-                self::request($connection, QueryParsers::getData($directPreApproval), $directPreApproval->preApprovalCode),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection, QueryParsers::getData($directPreApproval))
             );
             $response = Responsibility::http(
                 $http,
@@ -87,13 +85,9 @@ class QueryService
      *
      * @return string
      */
-    private static function request(Connection\Data $connection, $params = null, $preApprovalCode = null)
+    private static function request(Connection\Data $connection, $params = null)
     {
-        if ($preApprovalCode) {
-            return $connection->buildDirectPreApprovalQueryRequestUrl() . '/' . $preApprovalCode . "?" . $connection->buildCredentialsQuery();
-        }
-
-        return $connection->buildDirectPreApprovalQueryRequestUrl() . "?" . $connection->buildCredentialsQuery() . ($params ? '&' . $params : '');
+        return $connection->buildDirectPreApprovalQueryRequestUrl()."?".$connection->buildCredentialsQuery().($params ? '&'.$params : '');
     }
 
     /**

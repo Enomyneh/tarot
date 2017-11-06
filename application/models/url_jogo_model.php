@@ -36,6 +36,7 @@ class Url_jogo_model extends CI_Model {
                      ->join("usuario_url_jogo uuj", "uuj.cod_url_jogo = uj.cod_url_jogo")
                      ->join("setor_vida sv", "sv.cod_setor_vida = uj.cod_setor_vida")
                      ->where("uuj.cod_usuario", $options["cod_usuario"])
+                     ->where("sv.ativo = 1")
                      ->order_by("uuj.data_cadastro DESC");
         }
 

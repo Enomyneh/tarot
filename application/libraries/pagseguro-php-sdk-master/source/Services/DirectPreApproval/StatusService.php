@@ -63,9 +63,7 @@ class StatusService
             );
             $http->put(
                 self::request($connection, StatusParser::getPreApprovalCode($status)),
-                StatusParser::getData($status),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                StatusParser::getData($status)
             );
             $response = Responsibility::http(
                 $http,

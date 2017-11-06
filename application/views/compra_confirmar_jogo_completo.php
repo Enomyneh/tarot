@@ -84,15 +84,15 @@
 <? else: ?>
     <h2 class="versalete">Escolha a sua forma de pagamento</h2>
     <p>Ao clicar no botão comprar, você confirma estar ciente dos regulamentos e termos do site. </p>
-    <div>
-        <p>Tem certeza que deseja confirmar a compra do jogo acima?</p>
-    </div>
-    <div>Sim, debitar <b>R$ <?=moeda($total)?></b> do meu saldo de <b>R$ <?=moeda($saldo);?></b></div>
     <br/>
     <div class="tMargin20 clearfix">
-        <a debito="R$ <?=moeda($total)?>" class="newBlueButton buy" href="<?=site_url()?>/compra/jogo/debitar" style="padding: 10px 60px">
-            <span>Debitar</span>
+        <a class="newBlueButton buy" style="padding: 10px 60px">
+            <span>Comprar</span>
         </a>
+        <h3 class="carregando hidden">CARREGANDO...</h3>
+        <br/><br/><br/><br/><br/>
+        <p>Sua compra está protegida por: </p>
+        <img src="<?= base_url() ?>/assets/images/pagseguro.jpg" width="222"/>
     </div>
     <div>
         <br/>
@@ -107,18 +107,69 @@
 
 <script type="text/javascript">
 $("document").ready(function(){
-    $("a.buy").click(function(evt){
+    $("a.buy").click(function(evt)
+    {
         evt.preventDefault();
 
-        var valor = $(this).attr("debito");
-        var url = $(this).attr("href");
+        trocaCarregando();
 
-        // confirma o debito
-        if(confirm("Confirma o débito de "+valor+" de sua conta?")){
-            window.location.href = url;
-        }else{
-            return false;
-        }
+        $.ajax({
+            type: "POST",
+            url: "<?=site_url()?>"+"/pedido/gerarPagSeguro",
+            success : successPagSeguro,
+            error : errorPagSeguro
+        })
+
+
     });
 });
+
+function trocaCarregando()
+{
+    if($('a.buy').is(":visible"))
+    {
+        $('a.buy').hide();
+        $('.carregando').show();
+    }else{
+        $('a.buy').show();
+        $('.carregando').hide();
+    }
+}
+
+function successPagSeguro(data)
+{
+    try{
+        var retorno = $.parseJSON(data);
+    }catch (exception)
+    {
+        alert('ERROR: NAO FOI POSSIVEL RECEBER O RETORNO DO PAGSEGURO');
+        return false;
+    }
+
+    // obtem o codigo pra checkout
+    var checkoutCode = retorno.code;
+
+    // abre o lightbox
+    PagSeguroLightbox(checkoutCode);
+
+    // tira o carregando
+    trocaCarregando();
+}
+function errorPagSeguro()
+{
+    alert('erro');
+}
 </script>
+<?php if (ENVIROMENT_PAGSEGURO == "sandbox") : ?>
+    <!--Para integração em ambiente de testes no Sandbox use este link-->
+    <script
+            type="text/javascript"
+            src="https://stc.sandbox.pagseguro.uol.com.br/pagseguro/api/v2/checkout/pagseguro.lightbox.js">
+    </script>
+<?php else : ?>
+    <!--Para integração em ambiente de produção use este link-->
+    <script
+            type="text/javascript"
+            src="https://stc.pagseguro.uol.com.br/pagseguro/api/v2/checkout/pagseguro.lightbox.js">
+    </script>
+<?php endif; ?>

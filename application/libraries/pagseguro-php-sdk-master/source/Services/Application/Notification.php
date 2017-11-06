@@ -50,9 +50,7 @@ class Notification
             $http = new Http();
             Logger::info(sprintf("GET: %s", self::request($connection)), ['service' => 'Application.Notification']);
             $http->get(
-                self::request($connection),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection)
             );
 
             $response = Responsibility::http(

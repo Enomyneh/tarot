@@ -63,9 +63,7 @@ class DiscountService
             );
             $http->put(
                 self::request($connection, DiscountParser::getPreApprovalCode($discount)),
-                DiscountParser::getData($discount),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                DiscountParser::getData($discount)
             );
             $response = Responsibility::http(
                 $http,

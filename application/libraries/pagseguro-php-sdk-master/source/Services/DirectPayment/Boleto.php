@@ -68,9 +68,7 @@ class Boleto
 
             $http->post(
                 self::request($connection),
-                Request::getData($payment),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                Request::getData($payment)
             );
 
             $response = Responsibility::http(

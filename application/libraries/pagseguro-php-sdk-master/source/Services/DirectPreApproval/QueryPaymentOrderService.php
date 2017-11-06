@@ -61,9 +61,7 @@ class QueryPaymentOrderService
                 ['service' => 'DirectPreApproval']
             );
             $http->get(
-                self::request($connection, QueryPaymentOrderParsers::getPreApprovalCode($queryPaymentOrder), QueryPaymentOrderParsers::getData($queryPaymentOrder)),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection, QueryPaymentOrderParsers::getPreApprovalCode($queryPaymentOrder), QueryPaymentOrderParsers::getData($queryPaymentOrder))
             );
             $response = Responsibility::http(
                 $http,

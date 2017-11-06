@@ -50,9 +50,7 @@ class Authorization
             );
             $http->post(
                 self::request($connection),
-                \PagSeguro\Parsers\Authorization\Request::getData($authorization),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                \PagSeguro\Parsers\Authorization\Request::getData($authorization)
             );
 
             $response = Responsibility::http(

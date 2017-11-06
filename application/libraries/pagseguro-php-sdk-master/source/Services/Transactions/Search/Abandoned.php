@@ -61,9 +61,7 @@ class Abandoned
                 ['service' => 'Transactions.Search.Abandoned']
             );
             $http->get(
-                self::request($connection, $options),
-                20,
-                \PagSeguro\Configuration\Configure::getCharset()->getEncoding()
+                self::request($connection, $options)
             );
 
             $response = Responsibility::http(
