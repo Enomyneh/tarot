@@ -69,31 +69,61 @@
 <div>
     
 </div>
-
+<br/>
 <? if($total == 0): ?>
 
     <div>
         <br/><br/>
         <h2 class="versalete">Este jogo é gratuito. Clique para obter a leitura.</h2>
         <br/><br/>
-        <a class="newBlueButton" href="<?=site_url()?>/compra/obterJogoGratis" style="padding: 10px 60px">
+        <a class="newBlueButton" href="<?=site_url()?>/compra/obterJogo" style="padding: 10px 60px">
             <span>Obter leitura completa</span>
         </a>
     </div>
 
 <? else: ?>
-    <h2 class="versalete">Escolha a sua forma de pagamento</h2>
-    <p>Ao clicar no botão comprar, você confirma estar ciente dos regulamentos e termos do site. </p>
-    <br/>
-    <div class="tMargin20 clearfix">
-        <a class="newBlueButton buy" style="padding: 10px 60px">
-            <span>Comprar</span>
-        </a>
-        <h3 class="carregando hidden">CARREGANDO...</h3>
-        <br/><br/><br/><br/><br/>
-        <p>Sua compra está protegida por: </p>
-        <img src="<?= base_url() ?>/assets/images/pagseguro.jpg" width="222"/>
-    </div>
+    <? /** @var Pedido_model $pedido */ ?>
+    <? if(is_null($pedido) == false): ?>
+        <input type="hidden" id="cod_pedido" value="<?= $pedido->cod ?>" />
+        <h2 class="versalete">Dados do seu pedido</h2>
+        <table class="table">
+            <tr>
+                <th>Cod.</th>
+                <th>Data</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td><?= $pedido->cod ?></td>
+                <td><?= mysql_to_br($pedido->data) ?></td>
+                <td><?= $pedido->statusAmigavel ?></td>
+            </tr>
+        </table>
+    <? endif; ?>
+
+    <? /** @var Jogo_model $jogoCompleto */ ?>
+    <? if($jogoCompleto->liberadoParaConsulta == true): ?>
+        <div>
+            <br/><br/>
+            <h2 class="versalete">Obrigado! Seu pedido está pago e liberado para leitura.</h2>
+            <br/><br/>
+            <a class="newBlueButton" href="<?=site_url()?>/compra/obterJogo" style="padding: 10px 60px">
+                <span>Obter leitura completa</span>
+            </a>
+        </div>
+    <? else: ?>
+        <h2 class="versalete">Escolha a sua forma de pagamento</h2>
+        <p>Ao clicar no botão comprar, você confirma estar ciente dos regulamentos e termos do site. </p>
+        <br/>
+        <div class="tMargin20 clearfix">
+            <a class="newBlueButton buy" style="padding: 10px 60px">
+                <span>Comprar</span>
+            </a>
+            <h3 class="carregando hidden">CARREGANDO...</h3>
+            <br/><br/><br/><br/><br/>
+            <p>Sua compra está protegida por: </p>
+            <img src="<?= base_url() ?>/assets/images/pagseguro.jpg" width="222"/>
+        </div>
+    <? endif; ?>
     <div>
         <br/>
         <br/>
@@ -150,15 +180,55 @@ function successPagSeguro(data)
     var checkoutCode = retorno.code;
 
     // abre o lightbox
-    PagSeguroLightbox(checkoutCode);
+    PagSeguroLightbox({
+        code: checkoutCode
+    }, {
+        success : successPagSeguroLightbox,
+        abort : function() {
+            alert("abort");
+        }
+    });
 
     // tira o carregando
     trocaCarregando();
 }
+
 function errorPagSeguro()
 {
     alert('erro');
 }
+
+function successPagSeguroLightbox(pagSeguroTransactionCode)
+{
+    var $body = $("body");
+
+    var codPedido = $body.find('#cod_pedido').val();
+
+    $.ajax({
+        type: "POST",
+        url: "<?=site_url()?>"+"/pedido/pagSeguroSalvarTransactionCode",
+        data : { codPedido : codPedido, pagSeguroTransactionCode : pagSeguroTransactionCode },
+        success : successSaveTransactionCode,
+        error : errorSaveTransactionCode
+    });
+}
+
+function successSaveTransactionCode(data)
+{
+    // recarrega a pagina
+    location.reload();
+}
+
+function errorPagSeguroLightbox()
+{
+    alert("erro");
+}
+
+function errorSaveTransactionCode()
+{
+    alert('erro');
+}
+
 </script>
 <?php if (ENVIROMENT_PAGSEGURO == "sandbox") : ?>
     <!--Para integração em ambiente de testes no Sandbox use este link-->

@@ -14,7 +14,7 @@
         </span>
         <span class="right">
 
-                <? if($jogo->jogoCompleto->jaComprado == true): ?>
+                <? if($jogo->jogoCompleto->liberadoParaConsulta == true): ?>
                     <a href="<?=site_url()?>/jogo/resultado/token/<?=$jogo->token?>">
                         Ver Análise Completa
                     </a>

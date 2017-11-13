@@ -224,6 +224,26 @@ class Pedido extends CI_Controller {
 
         die(json_encode($retorno));
     }
+
+    public function pagSeguroSalvarTransactionCode()
+    {
+        $this->load->model("pedido_model", 'pedido');
+
+        // obtem os parametros
+        $codPedido = $this->input->post('codPedido');
+        $pagSeguroTransactionCode = $this->input->post('pagSeguroTransactionCode');
+
+        // obtem o pedido
+        /** @var Pedido_model $pedido */
+        $pedido = array_shift($this->pedido->get(array('cod_pedido' => $codPedido)));
+
+        // inclui o pagseguroTransactionCode
+        $pedido->pagSeguroTransactionCode = $pagSeguroTransactionCode;
+
+        // salva no bd
+        $pedido->update();
+
+        die(json_encode(array('status' => true)));
+    }
 }
 
-?>

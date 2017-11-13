@@ -315,6 +315,12 @@ class Jogo extends CI_Controller {
             die("erro: token nao encontrado");
         }
 
+        // atualiza na session
+        $this->load->library("session");
+
+        // salva o token do jogo na sessao
+        $this->session->set_userdata(array("token_jogo" => $token));
+
         // carrega as models
         $this->load->model("url_jogo_model", "url_jogo");
         $this->load->model("combinacao_model", "combinacao");
@@ -355,8 +361,12 @@ class Jogo extends CI_Controller {
                 // se existe resultado
                 if(isset($jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao)){
 
-                    // obtem somente o texto cortado
-                    $jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
+                    // se ja veio da tela de compras e o jogo eh gratis, nao corta
+                    if($jogoCompleto->custo > 0 OR ($jogoCompleto->custo == 0 AND $veioDeCompras != 1))
+                    {
+                        // obtem somente o texto cortado
+                        $jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao = $this->cortarTextoGratuito($jogo["resultado"]->texto_combinacao);
+                    }
                 }
 
                 $jogoCompleto->combinacoes[$key]["comprado"] = false;
@@ -368,7 +378,7 @@ class Jogo extends CI_Controller {
             foreach ($jogoCompleto->combinacoes as $key => $jogo)
             {
                 // se nao possui combinacao corta o texto
-                if($jogo['casaCarta']->ja_comprada == false)
+                if($jogo['casaCarta']->ja_comprada == false AND $jogoCompleto->liberadoParaConsulta == false)
                 {
                     // se existe resultado
                     if(isset($jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao))

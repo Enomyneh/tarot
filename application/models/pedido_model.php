@@ -12,7 +12,10 @@ class Pedido_model extends CI_Model {
     public $status;
     public $data;
     public $tokenJogo;
-    public $pagseguroTransactionCode;
+    public $pagSeguroTransactionCode;
+    public $pagSeguroCheckoutCode;
+    public $statusAmigavel;
+    public $codUsuario;
     
     public function __construct(){
         
@@ -86,6 +89,8 @@ class Pedido_model extends CI_Model {
      */
     public function create(Jogo_model $jogo)
     {
+        $this->auth->check();
+
         $codPedido = null;
 
         // checa se o pedido ja existe
@@ -107,7 +112,8 @@ class Pedido_model extends CI_Model {
             $this->db->insert('pedido_novo', array(
                 'data' => $data,
                 'status' => STATUS_AGUARDANDO_PAGAMENTO,
-                'token_jogo' => $jogo->url->token
+                'token_jogo' => $jogo->url->token,
+                'cod_usuario' => $this->auth->getData('cod')
             ));
 
             $codPedido = $this->db->insert_id();
@@ -124,12 +130,18 @@ class Pedido_model extends CI_Model {
         {
             $this->db->where('cod_pedido_novo', $options['cod_pedido']);
         }
+        if(isset($options['token']))
+        {
+            $this->db->where('token_jogo', $options['token']);
+        }
 
         $this->db->select('cod_pedido_novo')
             ->select('status')
             ->select('data')
             ->select('token_jogo')
             ->select('pagseguro_transaction_code')
+            ->select('pagseguro_checkout_code')
+            ->select('cod_usuario')
             ->from('pedido_novo');
 
         $result = $this->db->get();
@@ -142,14 +154,70 @@ class Pedido_model extends CI_Model {
 
             $pedido->cod = $row->cod_pedido_novo;
             $pedido->status = $row->status;
+            $pedido->statusAmigavel = _helper_pedido_status_amigavel($pedido->status);
             $pedido->data = $row->data;
-            $pedido->pagseguroTransactionCode = $row->pagseguro_transaction_code;
+            $pedido->pagSeguroTransactionCode = $row->pagseguro_transaction_code;
+            $pedido->pagSeguroCheckoutCode = $row->pagseguro_checkout_code;
             $pedido->tokenJogo = $row->token_jogo;
             $pedido->codFormatadoPedidoReferencia = PEDIDOS_PREFIXO_REFERENCIA . str_pad($pedido->cod, PEDIDOS_PADDING_LENGTH, '0', STR_PAD_LEFT);
+            $pedido->codUsuario = $row->cod_usuario;
 
             $pedidos[] = $pedido;
         }
 
         return $pedidos;
     }
+
+    public function update()
+    {
+        $this->db->update('pedido_novo',
+            array(
+                'data' => $this->data,
+                'status' => $this->status,
+                'token_jogo' => $this->tokenJogo,
+                'pagseguro_transaction_code' => $this->pagSeguroTransactionCode,
+                'pagseguro_checkout_code' => $this->pagSeguroCheckoutCode,
+                'cod_usuario' => $this->codUsuario
+            ),
+            array('cod_pedido_novo' => $this->cod));
+
+        return true;
+    }
+
+    public function atualizaStatus()
+    {
+        if($this->pagSeguroTransactionCode == '' OR is_null($this->pagSeguroTransactionCode) == true){
+            return false;
+        }
+
+        if($this->status == STATUS_PAGO)
+        {
+            // se ja esta pago nao precisa mexer no status
+            return false;
+        }
+
+        // busca os dados da transacao
+        /** @var \PagSeguro\Parsers\Transaction\Search\Code\Response $transacaoPagSeguro */
+        $transacaoPagSeguro = Utils::consultaTransacaoPagSeguro($this);
+
+        // valida se ja foi pago no Pagseguro
+        if($transacaoPagSeguro->getStatus() == PAGSEGURO_ID_STATUS_PAGO)
+        {
+            $this->status = STATUS_PAGO;
+            $this->update();
+
+        }else{
+
+            // se ainda nao consta como pago atualiza com status aguardando pagseguro
+            if($this->status != STATUS_AGUARDANDO_PAGSEGURO)
+            {
+                $this->status = STATUS_AGUARDANDO_PAGSEGURO;
+                $this->update();
+            }
+        }
+
+        return true;
+    }
 }
+
+

@@ -14,6 +14,7 @@ class Jogo_model extends CI_Model {
     public $combinacoes = array();
     public $custo = 0;
     public $jaComprado = false;
+    public $liberadoParaConsulta = false;
     
     public function __construct(){
         
@@ -66,6 +67,11 @@ class Jogo_model extends CI_Model {
         // assume que o jogo inteiro esta comprado
         // caso tenha alguma casa nao comprada esta flag sera alterada
         $this->jaComprado = true;
+
+        // assume que o jogo esta liberado para consulta
+        // isso quer dizer que as cartas pagas ja foram compradas
+        // e o restante das cartas sao gratuitas
+        $this->liberadoParaConsulta = true;
 
         foreach($this->combinacoes as $key => $jogo)
         {
@@ -123,24 +129,41 @@ class Jogo_model extends CI_Model {
 
             // soma no custo total do jogo
             $this->custo += $jogo['casaCarta']->custo;
+
+            // checa se o jogo esta liberado para consulta
+            if($jogo['arcanoMaior']->ja_comprado == false AND $jogo['arcanoMaior']->custo > 0)
+            {
+                $this->liberadoParaConsulta = false;
+            }
+            if($jogo['arcanoMenor1']->ja_comprado == false AND $jogo['arcanoMenor1']->custo > 0)
+            {
+                $this->liberadoParaConsulta = false;
+            }
+            if($jogo['arcanoMenor2']->ja_comprado == false AND $jogo['arcanoMenor2']->custo > 0)
+            {
+                $this->liberadoParaConsulta = false;
+            }
         }
     }
 
     public function getCustoPorCarta($codCarta, $codCasa, $setorVida)
     {
-        // se o usuario ja possui essa combinacao de carta, casa e setor, entao o custo eh zero
-        $cartaUsuario = array_shift($this->carta_casa_setor_valor->get(array(
-            'cod_carta' => $codCarta,
-            'cod_casa_carta' => $codCasa,
-            'cod_setor_vida' => $setorVida->cod_setor_vida,
-            'cod_usuario' => $this->auth->getUserId()
-        )));
-
-        if(is_null($cartaUsuario) == false)
-        {
-            // usuario ja possui essa combinacao, custo zero
-            return 0;
-        }
+//        if($this->auth->isLoggedIn())
+//        {
+//            // se o usuario ja possui essa combinacao de carta, casa e setor, entao o custo eh zero
+//            $cartaUsuario = array_shift($this->carta_casa_setor_valor->get(array(
+//                'cod_carta' => $codCarta,
+//                'cod_casa_carta' => $codCasa,
+//                'cod_setor_vida' => $setorVida->cod_setor_vida,
+//                'cod_usuario' => $this->auth->getUserId()
+//            )));
+//
+//            if(is_null($cartaUsuario) == false)
+//            {
+//                // usuario ja possui essa combinacao, custo zero
+//                return 0;
+//            }
+//        }
 
         // busca o custo padrao de cada carta-casa-setor
         $custoPadrao = $this->carta_casa_setor_valor->getCustoPadrao();

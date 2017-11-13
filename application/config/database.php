@@ -45,7 +45,7 @@
 | the active record class
 */
 
-$active_group = 'producao';
+$active_group = 'default';
 $active_record = TRUE;
 
 $db['default']['hostname'] = '127.0.0.1';

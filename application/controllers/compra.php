@@ -8,6 +8,7 @@
  * @property Combinacao_model combinacao
  * @property Auth auth
  * @property Jogo_model jogo
+ * @property Pedido_model pedido
  */
 
 class Compra extends CI_Controller {
@@ -261,10 +262,10 @@ class Compra extends CI_Controller {
     }
 
     // funcao para comprar o jogo com dez combinacoes 
-    public function jogo($rota){
-
+    public function jogo($rota)
+    {
         if($rota == "confirm_without_login"){
-            $this->confirmarSemLogin();
+            $this->confirmarJogoCompleto();
         }
         else if($rota == "confirm"){
             $this->confirmarJogoCompleto();
@@ -327,9 +328,6 @@ class Compra extends CI_Controller {
 
     public function confirmarJogoCompleto()
     {
-        // confirma o login
-        $this->auth->check();
-
         // carrega as models
         $this->load->model("carta_model", "carta");
         $this->load->model("url_jogo_model", "url_jogo");
@@ -338,49 +336,39 @@ class Compra extends CI_Controller {
         $this->load->model("setor_vida_model", "setor_vida");
         $this->load->model("carta_casa_setor_valor_model", "carta_casa_setor_valor");
         $this->load->model("jogo_model", "jogo");
+        $this->load->model("pedido_model", "pedido");
 
         // busca o jogo completo a patir da session
         $jogoCompleto = $this->jogo->getByTokenInSession();
 
-        // busca as cartas que o usuario ja comprou para nao cobrar novamente
-        $cartasCasasSetoresUsuario = $this->carta_casa_setor_valor->get(array(
-            'cod_usuario' => $this->auth->getData('cod')
-        ));
+        // busca os dados do pedido caso ja exista
+        $pedidos = $this->pedido->get(array('token' => $jogoCompleto->url->token));
 
-        // TODO: RETIRAR COBRANCAS INDEVIDAS
+        $pedido = null;
+        if(count($pedidos) > 0)
+        {
+            /** @var Pedido_model $pedido */
+            $pedido = array_shift($pedidos);
 
-        // desativado
-//        // busca as combinacoes do usuario
-//        $combinacoes = $this->combinacao->getUsuarioCombinacao(array(
-//            "cod_usuario" => $this->auth->getData("cod")
-//        ));
+            // atualiza o status do pedido
+            $pedido->atualizaStatus();
 
-//        // compara para ver quais combinacoes o usuario ja possui
-//        foreach ($jogoCompleto as $key => $jogo) {
-//            // marca como nao comprado
-//            $jogoCompleto[$key]["comprado"] = false;
-//
-//            foreach ($combinacoes as $combinacao) {
-//                if( $jogo["arcanoMaior"]->cod_carta == $combinacao->cod_arcano_maior &&
-//                    $jogo["arcanoMenor1"]->cod_carta == $combinacao->cod_arcano_menor_1 &&
-//                    $jogo["arcanoMenor2"]->cod_carta == $combinacao->cod_arcano_menor_2){
-//
-//                    // marca como comprado
-//                    $jogoCompleto[$key]["comprado"] = true;
-//
-//                    break;
-//                }
-//            }
-//        }
-
-        // DESATIVADA COBRANCA POR SALDO
-        // obtem o saldo do usuario
-        // $saldo = $this->conta->getSaldo(array("cod_usuario" => $this->auth->getData("cod")));
+            // checa se ja esta pago
+            if($pedido->status == STATUS_PAGO)
+            {
+                // se o jogo ainda nao esta liberado para consulta, insere o jogo para o usuario
+                if($jogoCompleto->liberadoParaConsulta == false)
+                {
+                    $this->inserirJogoParaUsuario($jogoCompleto);
+                }
+            }
+        }
 
         // chama a view
         $this->template->view("compra_confirmar_jogo_completo", array(
             "title" => "Confirmar compra",
             "jogoCompleto" => $jogoCompleto,
+            "pedido" => $pedido,
             "verticalTabs" => true
         ));
     }
@@ -494,11 +482,8 @@ class Compra extends CI_Controller {
         ));
     }
 
-    public function obterJogoGratis()
+    public function obterJogo()
     {
-        // checa a sessao
-        $this->auth->check();
-
         // carrega as models
         $this->load->model("carta_model","carta");
         $this->load->model("combinacao_model", "combinacao");
@@ -510,18 +495,13 @@ class Compra extends CI_Controller {
         $jogoCompleto = $this->jogo->getByTokenInSession();
 
         // checa o valor do jogo, se for gratis, apenas mostra o resultado
-        if($jogoCompleto->custo == 0)
-        {
-            $this->redirecionarResultado($jogoCompleto);
-            die;
-        }
+//        if($jogoCompleto->custo == 0)
+//        {
+//
+//        }
 
-        die("pag seguro pendente");
-
-        // chama a funcao que inclui as combinacoes de carta, casa, setor para o usuario
-        $this->inserirJogoParaUsuario($jogoCompleto, $setorVida);
-
-        die("ok");
+        $this->redirecionarResultado($jogoCompleto);
+        die;
     }
 
     public function redirecionarResultado(Jogo_model $jogo)
@@ -532,13 +512,15 @@ class Compra extends CI_Controller {
         redirect("jogo/resultado/".$url->url . '?came_from_compras=1');
     }
 
-    private function inserirJogoParaUsuario($jogoCompleto,  $setorVida)
+    private function inserirJogoParaUsuario(Jogo_model $jogoCompleto)
     {
         $this->load->model("combinacao_model", "combinacao");
 
+        $setorVida = $jogoCompleto->setorVida;
+
         $codUsuario = $this->auth->getData("cod");
 
-        foreach($jogoCompleto as $key => $jogo)
+        foreach($jogoCompleto->combinacoes as $key => $jogo)
         {
             // insere o arcano maior
             $this->combinacao->inserirUsuarioCartaCasaSetor($codUsuario, $jogo['arcanoMaior']->cod_carta,

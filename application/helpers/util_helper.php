@@ -127,3 +127,30 @@ function getJogoByCartasString($cartasStr){
     // retorna o jogo completo
     return $jogoCompleto;
 }
+
+function _helper_pedido_status_amigavel($status)
+{
+    $statusAmigavel = array(
+        STATUS_PAGO => 'Pago',
+        STATUS_AGUARDANDO_PAGAMENTO => 'Aguardando Pagamento',
+        STATUS_AGUARDANDO_PAGSEGURO => 'Aguardando Retorno Pagseguro'
+    );
+
+    if(isset($statusAmigavel[$status]) == false)
+    {
+        return 'ERROR_STATUS';
+    }else{
+
+        return $statusAmigavel[$status];
+    }
+}
+
+function _print($var)
+{
+    echo("<pre>");print_r($var);die;
+}
+
+function _dump($var)
+{
+    var_dump($var);die;
+}

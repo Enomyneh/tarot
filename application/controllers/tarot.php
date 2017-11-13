@@ -486,9 +486,6 @@ class Tarot extends CI_Controller {
     {
         $qtdeCasas = 3;
 
-        // checa o login
-        $this->auth->check();
-
         // carrega a session
         $this->load->library('session');
         

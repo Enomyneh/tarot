@@ -42,7 +42,10 @@ define('NO_REDIRECT' , false);
 define('REDIRECT' , true);
 
 define('STATUS_AGUARDANDO_PAGAMENTO', 'AGUARDANDO_PAGAMENTO');
+define('STATUS_AGUARDANDO_PAGSEGURO', 'AGUARDANDO_PAGSEGURO');
 define('STATUS_PAGO', 'PAGO');
+
+define('PAGSEGURO_ID_STATUS_PAGO', 3);
 
 define('NOME_SISTEMA', 'Taromancia');
 define('VERSAO_SISTEMA', 'v1.0.0');

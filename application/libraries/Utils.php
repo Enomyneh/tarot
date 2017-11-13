@@ -133,22 +133,8 @@ class Utils {
             die('ERRO: JOGO SEM CUSTO PARA COBRANCA');
         }
 
-        // define o email e a senha
-        $email = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_EMAIL_PRODUCAO : PAGSEGURO_EMAIL_SANDBOX;
-        $token = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_TOKEN_PRODUCAO : PAGSEGURO_TOKEN_SANDBOX;
-
-        \PagSeguro\Library::initialize();
-        \PagSeguro\Library::cmsVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
-        \PagSeguro\Library::moduleVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
-
-        //For example, to configure the library dynamically:
-        \PagSeguro\Configuration\Configure::setEnvironment(ENVIROMENT_PAGSEGURO);//production or sandbox
-        \PagSeguro\Configuration\Configure::setAccountCredentials(
-            $email,
-            $token
-        );
-        \PagSeguro\Configuration\Configure::setCharset('UTF-8');// UTF-8 or ISO-8859-1
-        \PagSeguro\Configuration\Configure::setLog(true, getcwd() . '/application/cache/logPagseguro.log');
+        // inicia o pagseguro
+        self::initPagSeguro();
 
         $payment = new \PagSeguro\Domains\Requests\Payment();
 
@@ -156,7 +142,7 @@ class Utils {
             '0001', // ITEM ID
             'Jogo de Tarot - Taromancia', // ITEM DESCRIPTION
             1, // ITEM QUANTITY
-            $jogo->custo // ITEM AMOUNT
+            number_format($jogo->custo, 2, '.', '') // ITEM AMOUNT
         );
 
         //Add items by parameter
@@ -220,9 +206,60 @@ class Utils {
             );
         }
 
+        // salva o checkout cod
+        $pedido->pagSeguroCheckoutCode = $checkoutCode;
+        $pedido->update();
+
         return array(
             'success' => true,
             'code' => $checkoutCode
         );
+    }
+
+    public static function consultaTransacaoPagSeguro(Pedido_model $pedido)
+    {
+        if($pedido->pagSeguroTransactionCode == '' OR is_null($pedido->pagSeguroTransactionCode))
+        {
+            return false;
+        }
+        if($pedido->status == STATUS_PAGO)
+        {
+            return false;
+        }
+
+        // inicia o pagseguro
+        self::initPagSeguro();
+
+        try {
+            $response = \PagSeguro\Services\Transactions\Search\Code::search(
+                \PagSeguro\Configuration\Configure::getAccountCredentials(),
+                $pedido->pagSeguroTransactionCode
+            );
+
+        } catch (Exception $e) {
+            return null;
+        }
+
+        return $response;
+    }
+
+    public static function initPagSeguro()
+    {
+        // define o email e a senha
+        $email = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_EMAIL_PRODUCAO : PAGSEGURO_EMAIL_SANDBOX;
+        $token = (ENVIROMENT_PAGSEGURO == 'production') ? PAGSEGURO_TOKEN_PRODUCAO : PAGSEGURO_TOKEN_SANDBOX;
+
+        \PagSeguro\Library::initialize();
+        \PagSeguro\Library::cmsVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
+        \PagSeguro\Library::moduleVersion()->setName(NOME_SISTEMA)->setRelease(VERSAO_SISTEMA);
+
+        //For example, to configure the library dynamically:
+        \PagSeguro\Configuration\Configure::setEnvironment(ENVIROMENT_PAGSEGURO);//production or sandbox
+        \PagSeguro\Configuration\Configure::setAccountCredentials(
+            $email,
+            $token
+        );
+        \PagSeguro\Configuration\Configure::setCharset('UTF-8');// UTF-8 or ISO-8859-1
+        \PagSeguro\Configuration\Configure::setLog(true, getcwd() . '/application/cache/logPagseguro.log');
     }
 }

@@ -3,8 +3,6 @@
 class Carta extends CI_Controller {
     
     public function escolher(){
-        // checa a autenticacao
-        $this->auth->check();
         
         // obtem os parametros
         $casaCod         = $this->input->get("casa");
