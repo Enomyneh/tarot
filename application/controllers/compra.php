@@ -341,6 +341,15 @@ class Compra extends CI_Controller {
         // busca o jogo completo a patir da session
         $jogoCompleto = $this->jogo->getByTokenInSession();
 
+        if(Auth::isLoggedIn())
+        {
+            // salva o jogo
+            $this->url_jogo->saveUsuarioUrlJogo(array(
+                "cod_usuario"   => $this->auth->getUserId(),
+                "cod_url_jogo"  => $jogoCompleto->url->cod_url_jogo
+            ));
+        }
+
         // busca os dados do pedido caso ja exista
         $pedidos = $this->pedido->get(array('token' => $jogoCompleto->url->token));
 
@@ -357,7 +366,7 @@ class Compra extends CI_Controller {
             if($pedido->status == STATUS_PAGO)
             {
                 // se o jogo ainda nao esta liberado para consulta, insere o jogo para o usuario
-                if($jogoCompleto->liberadoParaConsulta == false)
+                if($jogoCompleto->jaComprado == false)
                 {
                     $this->inserirJogoParaUsuario($jogoCompleto);
                 }
@@ -536,5 +545,15 @@ class Compra extends CI_Controller {
         }
 
         return true;
+    }
+
+    public function cadastro()
+    {
+        @session_start();
+
+        $_SESSION['compra'] = 1;
+
+        // direciona pra tela de cadastro
+        redirect("login/signup");
     }
 }

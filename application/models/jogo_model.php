@@ -14,10 +14,9 @@ class Jogo_model extends CI_Model {
     public $combinacoes = array();
     public $custo = 0;
     public $jaComprado = false;
-    public $liberadoParaConsulta = false;
     
-    public function __construct(){
-        
+    public function __construct()
+    {
         // construtor parent
         parent::__construct();
         
@@ -68,10 +67,10 @@ class Jogo_model extends CI_Model {
         // caso tenha alguma casa nao comprada esta flag sera alterada
         $this->jaComprado = true;
 
-        // assume que o jogo esta liberado para consulta
-        // isso quer dizer que as cartas pagas ja foram compradas
-        // e o restante das cartas sao gratuitas
-        $this->liberadoParaConsulta = true;
+//        // assume que o jogo esta liberado para consulta
+//        // isso quer dizer que as cartas pagas ja foram compradas
+//        // e o restante das cartas sao gratuitas
+//        $this->liberadoParaConsulta = true;
 
         foreach($this->combinacoes as $key => $jogo)
         {
@@ -86,6 +85,11 @@ class Jogo_model extends CI_Model {
                 $jogo['casaCarta']->cod_casa_carta,
                 $this->setorVida
             );
+            if($jogo['arcanoMaior']->custo == 0)
+            {
+                $jogo['arcanoMaior']->ja_comprado = true;
+            }
+
             $jogo['arcanoMenor1']->custo = $this->getCustoPorCarta(
                 $jogo['arcanoMenor1']->cod_carta,
                 $jogo['casaCarta']->cod_casa_carta,
@@ -96,6 +100,11 @@ class Jogo_model extends CI_Model {
                 $jogo['casaCarta']->cod_casa_carta,
                 $this->setorVida
             );
+            if($jogo['arcanoMenor1']->custo == 0)
+            {
+                $jogo['arcanoMenor1']->ja_comprado = true;
+            }
+
             $jogo['arcanoMenor2']->custo = $this->getCustoPorCarta(
                 $jogo['arcanoMenor2']->cod_carta,
                 $jogo['casaCarta']->cod_casa_carta,
@@ -106,6 +115,10 @@ class Jogo_model extends CI_Model {
                 $jogo['casaCarta']->cod_casa_carta,
                 $this->setorVida
             );
+            if($jogo['arcanoMenor2']->custo == 0)
+            {
+                $jogo['arcanoMenor2']->ja_comprado = true;
+            }
 
             // calcula o custo por casa
             $jogo['casaCarta']->custo = $jogo['arcanoMaior']->custo +
@@ -130,18 +143,30 @@ class Jogo_model extends CI_Model {
             // soma no custo total do jogo
             $this->custo += $jogo['casaCarta']->custo;
 
-            // checa se o jogo esta liberado para consulta
-            if($jogo['arcanoMaior']->ja_comprado == false AND $jogo['arcanoMaior']->custo > 0)
+//            // checa se o jogo esta liberado para consulta
+//            if($jogo['arcanoMaior']->ja_comprado == false AND $jogo['arcanoMaior']->custo > 0)
+//            {
+//                $this->liberadoParaConsulta = false;
+//            }
+//            if($jogo['arcanoMenor1']->ja_comprado == false AND $jogo['arcanoMenor1']->custo > 0)
+//            {
+//                $this->liberadoParaConsulta = false;
+//            }
+//            if($jogo['arcanoMenor2']->ja_comprado == false AND $jogo['arcanoMenor2']->custo > 0)
+//            {
+//                $this->liberadoParaConsulta = false;
+//            }
+        }
+
+        // se o jogo inteiro custa zero, entao nao foi comprado
+        if($this->custo == 0)
+        {
+            $this->jaComprado = false;
+
+            // acerta as casas tambem
+            foreach($this->combinacoes as $key => $jogo)
             {
-                $this->liberadoParaConsulta = false;
-            }
-            if($jogo['arcanoMenor1']->ja_comprado == false AND $jogo['arcanoMenor1']->custo > 0)
-            {
-                $this->liberadoParaConsulta = false;
-            }
-            if($jogo['arcanoMenor2']->ja_comprado == false AND $jogo['arcanoMenor2']->custo > 0)
-            {
-                $this->liberadoParaConsulta = false;
+                $jogo['casaCarta']->ja_comprada = false;
             }
         }
     }
@@ -166,6 +191,7 @@ class Jogo_model extends CI_Model {
 //        }
 
         // busca o custo padrao de cada carta-casa-setor
+        // TODO: COLOCAR NA SESSAO
         $custoPadrao = $this->carta_casa_setor_valor->getCustoPadrao();
 
         /** @var Carta_Casa_Setor_Valor_model $custo */

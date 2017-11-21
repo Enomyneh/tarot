@@ -11,6 +11,7 @@
             <td colspan="5" style="text-align: left;" class='b-span'>
                 <b>Produto:</b> Autoconsulta / Consulta Virtual<br/>
                 <b>Leitura do Tarot:</b> Metodologia de Análise Taromantica<br/>
+                <? /** @var Jogo_model $jogoCompleto */ ?>
                 <b>Setor:</b> <?= $jogoCompleto->setorVida->nome_setor_vida ?><br/>
                 <b>Acesso:</b> Leitura online<br/>
             </td>
@@ -40,7 +41,7 @@
                     <br/><?=$jogo["arcanoMenor2"]->nome_carta?>
                 </td>
                 <td class="border-left">
-                    <? if(@$jogo["comprado"] OR $jogo['casaCarta']->ja_comprada == true): ?>
+                    <? if((@$jogo["comprado"] OR $jogo['casaCarta']->ja_comprada == true) AND $jogo['casaCarta']->custo > 0): ?>
                         Já comprado
                     <? else: ?>
                         <? if($jogo['casaCarta']->custo == 0): ?>
@@ -56,10 +57,10 @@
         <tr class="first-line">
             <td colspan="5">
                 <h2 style="margin-top: 0; padding-bottom: 0;">Total:
-                    <? if($total == 0): ?>
+                    <? if($jogoCompleto->custo == 0): ?>
                         Grátis
                     <? else: ?>
-                        R$ <?=moeda($total)?>
+                        R$ <?=moeda($jogoCompleto->custo)?>
                     <? endif; ?>
                 </h2>
             </td>
@@ -70,8 +71,7 @@
     
 </div>
 <br/>
-<? if($total == 0): ?>
-
+<? if($jogoCompleto->custo == 0): ?>
     <div>
         <br/><br/>
         <h2 class="versalete">Este jogo é gratuito. Clique para obter a leitura.</h2>
@@ -101,7 +101,7 @@
     <? endif; ?>
 
     <? /** @var Jogo_model $jogoCompleto */ ?>
-    <? if($jogoCompleto->liberadoParaConsulta == true): ?>
+    <? if($jogoCompleto->jaComprado == true): ?>
         <div>
             <br/><br/>
             <h2 class="versalete">Obrigado! Seu pedido está pago e liberado para leitura.</h2>
@@ -115,11 +115,27 @@
         <p>Ao clicar no botão comprar, você confirma estar ciente dos regulamentos e termos do site. </p>
         <br/>
         <div class="tMargin20 clearfix">
-            <a class="newBlueButton buy" style="padding: 10px 60px">
-                <span>Comprar</span>
-            </a>
+            <? if(Auth::isLoggedIn()): ?>
+                <a class="newBlueButton buy" style="padding: 10px 60px">
+                    <span>Comprar</span>
+                </a>
+            <? else: ?>
+                <a class="newBlueButton" style="padding: 10px 60px" href="<?= site_url() ?>/compra/cadastro">
+                    <span>Comprar</span>
+                </a>
+            <? endif ?>
             <h3 class="carregando hidden">CARREGANDO...</h3>
-            <br/><br/><br/><br/><br/>
+            <br/><br/><br/>
+
+            <div class="clearfix">
+                <div class="error-container" style="display: none;">
+                    <?= $this->load->view('error_box', array(
+                        'errorMsg' => 'A compra não foi concluída com êxito. Por favor, clique novamente em comprar para continuar.'
+                    )) ?>
+                </div>
+            </div>
+
+            <br/><br/>
             <p>Sua compra está protegida por: </p>
             <img src="<?= base_url() ?>/assets/images/pagseguro.jpg" width="222"/>
         </div>
@@ -142,6 +158,9 @@ $("document").ready(function(){
         evt.preventDefault();
 
         trocaCarregando();
+
+        // oculta o erro
+        $('.error-container').hide();
 
         $.ajax({
             type: "POST",
@@ -184,9 +203,7 @@ function successPagSeguro(data)
         code: checkoutCode
     }, {
         success : successPagSeguroLightbox,
-        abort : function() {
-            alert("abort");
-        }
+        abort : abortPagSeguroLightbox
     });
 
     // tira o carregando
@@ -216,17 +233,18 @@ function successPagSeguroLightbox(pagSeguroTransactionCode)
 function successSaveTransactionCode(data)
 {
     // recarrega a pagina
-    location.reload();
-}
-
-function errorPagSeguroLightbox()
-{
-    alert("erro");
+    location.href = SITE_URL + '/compra/jogo/confirm';
 }
 
 function errorSaveTransactionCode()
 {
     alert('erro');
+}
+
+function abortPagSeguroLightbox()
+{
+    // mostra a msg de erro
+    $('.error-container').show();
 }
 
 </script>

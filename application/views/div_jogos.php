@@ -14,7 +14,7 @@
         </span>
         <span class="right">
 
-                <? if($jogo->jogoCompleto->liberadoParaConsulta == true): ?>
+                <? if($jogo->jogoCompleto->custo == 0 OR $jogo->jogoCompleto->jaComprado == true): ?>
                     <a href="<?=site_url()?>/jogo/resultado/token/<?=$jogo->token?>">
                         Ver Análise Completa
                     </a>
@@ -22,8 +22,6 @@
                     <a href="<?=site_url()?>/mapa/verJogoCompleto?token=<?=$jogo->token?>">
                         <? if($jogo->jogoCompleto->custo > 0): ?>
                             Ver Análise Completa por apenas R$ <?=moeda($jogo->jogoCompleto->custo)?>
-                        <? else: ?>
-                            Ver Análise Completa
                         <? endif; ?>
                     </a>
                 <? endif; ?>

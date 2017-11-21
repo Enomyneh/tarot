@@ -377,8 +377,8 @@ class Jogo extends CI_Controller {
             // percorre o resultado para acertar as casas que o usuario nao possui e ainda deve comprar
             foreach ($jogoCompleto->combinacoes as $key => $jogo)
             {
-                // se nao possui combinacao corta o texto
-                if($jogo['casaCarta']->ja_comprada == false AND $jogoCompleto->liberadoParaConsulta == false)
+                // se nao possui o jogo corta o texto
+                if($jogoCompleto->jaComprado == false)
                 {
                     // se existe resultado
                     if(isset($jogoCompleto->combinacoes[$key]["resultado"]->texto_combinacao))

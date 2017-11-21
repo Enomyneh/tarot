@@ -1,10 +1,17 @@
 <div class="form">
     <form id="form" action="<?=site_url()?>/login/doSignup" method="POST">
 
-        <p class="sub-title">
-            <b class="versalete">Olá, seja bem-vindo(a)!</b>
-        </p>
-        <p>Cadastre-se para que você obtenha o melhor de nosso site.</p>
+        <? if($compra == 1): ?>
+            <p class="sub-title">
+                <b class="versalete">Cadastre-se</b>
+            </p>
+            <p>Para continuar sua compra, preencha o cadastro abaixo.</p>
+        <? else: ?>
+            <p class="sub-title">
+                <b class="versalete">Olá, seja bem-vindo(a)!</b>
+            </p>
+            <p>Cadastre-se para que você obtenha o melhor de nosso site.</p>
+        <? endif; ?>
 
         <p class="sub-title tMargin30">
             <b class="versalete">Sobre você</b>

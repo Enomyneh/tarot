@@ -32,11 +32,16 @@ class Login extends CI_Controller {
         ));
     }
     
-    public function signup(){
+    public function signup()
+    {
         // carrega as models
         $this->load->model("pais_model", "pais");
         $this->load->model("estado_model", "estado");
         $this->load->model("cidade_model", "cidade");
+
+        // checa se veio da tela de compra
+        @session_start();
+        $compra = $_SESSION['compra'];
         
         try{
             // obtem os paises
@@ -68,7 +73,8 @@ class Login extends CI_Controller {
             "title"   => "Cadastre-se",
             "paises"  => $paises,
             "estados" => $estados,
-            "cidades" => $cidades
+            "cidades" => $cidades,
+            "compra" => $compra
         ));
     }
     
@@ -125,6 +131,9 @@ class Login extends CI_Controller {
         
         // monta o token de ativacao
         $data["md5_ativacao"] = md5($data["nome"].$data["email"]."oracvlvm2013".time());
+
+        // ja cadastra como ativo
+        $data['ativo'] = 1;
         
         // carrega a model
         $this->load->model("login_model", "login");
@@ -140,7 +149,13 @@ class Login extends CI_Controller {
         $usuarioID = $this->db->insert_id();
         
         // envia o link de ativacao
-        $this->sendActivationLink($usuarioID);
+        // DESATIVADO
+        //$this->sendActivationLink($usuarioID);
+
+        // ja loga o usuario
+        $this->doSignin($data['email'], $data['senha']);
+
+        die;
         
         // carrega a view com a resposta
         $this->template->view("login_do_signup", array(
@@ -294,10 +309,21 @@ class Login extends CI_Controller {
         ));
     }
     
-    public function doSignin(){
-        // obtem os parametros
-        $email = $this->input->post("email");
-        $senha = md5($this->input->post("senha"));
+    public function doSignin($email = null, $senha = null)
+    {
+        $this->load->model("url_jogo_model", "url_jogo");
+
+        if(is_null($email) == true AND is_null($senha) == true)
+        {
+            // obtem os parametros
+            $email = $this->input->post("email");
+            $senha = $this->input->post("senha");
+        }
+
+        if(isMd5($senha) == false)
+        {
+            $senha = md5($senha);
+        }
         
         // carrega a model
         $this->load->model("login_model", "login");

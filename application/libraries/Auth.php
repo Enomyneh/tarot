@@ -2,7 +2,7 @@
  
 class Auth {
 
-    public function check($redirect = true){
+    public static function check($redirect = true){
         // obtem a sessao
         @session_start();
         
@@ -21,9 +21,9 @@ class Auth {
         }
     }
 
-    public function isLoggedIn()
+    public static function isLoggedIn()
     {
-        return $this->check(NO_REDIRECT);
+        return self::check(NO_REDIRECT);
     }
 
     public function getUserId()

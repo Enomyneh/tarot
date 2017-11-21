@@ -199,7 +199,7 @@ class Logger implements LoggerInterface
      */
     private static function write($file, $message)
     {
-        file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
+        @file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
     }
 
 

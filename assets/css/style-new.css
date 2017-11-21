@@ -669,3 +669,10 @@ div.two-boxes div {
 	width: 24%;
 	float: left;
 }
+div.error-box {
+	background-color: #ffd6d3;
+	color: darkred;
+	font-size: 12px;
+	font-weight: bold;
+	padding: 20px;
+}
